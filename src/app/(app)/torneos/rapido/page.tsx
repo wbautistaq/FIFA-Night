@@ -12,6 +12,7 @@ const FORMATS: { value: QuickTournamentInput["format"]; label: string; hint: str
   { value: "league", label: "Liga", hint: "Todos contra todos" },
   { value: "cup", label: "Copa", hint: "Eliminación directa" },
   { value: "league_double", label: "Ida y vuelta", hint: "Liga doble" },
+  { value: "swiss", label: "Suizo", hint: "Rondas por nivel" },
 ];
 const TEAMS: { value: QuickTournamentInput["teams"]; label: string }[] = [
   { value: "clubs", label: "Clubes" },
@@ -89,7 +90,7 @@ export default function QuickTournamentPage() {
 
       <section className="card space-y-4" aria-labelledby="qf">
         <h2 id="qf" className="text-lg uppercase">Formato y equipos</h2>
-        <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Formato">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Formato">
           {FORMATS.map((f) => (
             <button key={f.value} type="button" role="radio" aria-checked={format === f.value} onClick={() => setFormat(f.value)} className={clsx("flex min-h-16 flex-col items-center justify-center rounded-xl border px-1 text-center transition", format === f.value ? "border-neon bg-neon/10 text-neon shadow-glow-neon" : "border-white/15 bg-white/[.04] hover:border-white/30")}>
               <span className="font-display text-sm uppercase">{f.label}</span><span className="text-[11px] text-white/60">{f.hint}</span>

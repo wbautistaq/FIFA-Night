@@ -40,7 +40,7 @@ export function useTournament(id: string) {
     };
     const channel = sb.channel(`tournament-${id}`);
     channel.on("postgres_changes", { event: "*", schema: "public", table: "tournaments", filter: `id=eq.${id}` }, refresh);
-    for (const table of ["matches", "standings", "tournament_posts", "tournament_participants", "team_assignments", "player_stats", "predictions", "notifications"]) {
+    for (const table of ["matches", "standings", "tournament_posts", "tournament_participants", "team_assignments", "player_stats", "predictions", "notifications", "match_proofs", "mvp_votes"]) {
       channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `tournament_id=eq.${id}` }, refresh);
     }
     // Sin columna tournament_id: RLS limita los eventos a torneos donde participa el usuario

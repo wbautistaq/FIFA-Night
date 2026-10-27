@@ -4,6 +4,8 @@ const nextConfig = {
   // Permite verificar una build de producción sin pisar la carpeta .next del servidor de desarrollo
   distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
+  // Fotos del marcador: el teléfono las reduce antes de enviarlas, pero se deja margen sobre el 1 MB por defecto
+  experimental: { serverActions: { bodySizeLimit: "3mb" } },
   // Solo desarrollo: permite abrir el servidor de dev desde el celular en la misma red Wi-Fi
   allowedDevOrigins: ["192.168.31.171"],
   headers: async () => [

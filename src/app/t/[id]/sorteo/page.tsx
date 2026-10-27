@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { ArrowsClockwise, Heart, LockSimple, MagnifyingGlass, Prohibit, Shuffle, Trash, UsersThree } from "@phosphor-icons/react";
+import { ArrowsClockwise, Heart, Target, LockSimple, MagnifyingGlass, Prohibit, Shuffle, Trash, UsersThree } from "@phosphor-icons/react";
 import { useT } from "@/components/TournamentShell";
 import { DrawStage } from "@/components/DrawStage";
-import { ActionButton, EmptyState, Field, Stars, Toggle, useToast } from "@/components/ui/primitives";
+import { ActionButton, Avatar, EmptyState, Field, Stars, Toggle, useToast } from "@/components/ui/primitives";
 import { TeamCrest } from "@/components/TeamCrest";
+import { TeamRoulette } from "@/components/TeamRoulette";
 import { DEFAULT_DRAW_OPTIONS, DrawError, drawTeams, filterPool, ratingSpread, type DrawOptions } from "@/lib/engine/draw";
 import { secureRng } from "@/lib/engine/rng";
 import { teamStars } from "@/lib/teams";
@@ -25,6 +26,9 @@ export default function Draw() {
   const [opts, setOpts] = useState<DrawOptions>(DEFAULT_DRAW_OPTIONS);
   const [proposal, setProposal] = useState<{ participantId: string; teamId: string }[] | null>(null);
   const [animating, setAnimating] = useState(false);
+  // Ruleta: cada jugador elige entre 3 equipos; su resultado se muestra sin la animación del sorteo
+  const [roulette, setRoulette] = useState(false);
+  const [fromRoulette, setFromRoulette] = useState(false);
   const [search, setSearch] = useState("");
   const [bankLeague, setBankLeague] = useState<string | null>(null);
   const [bankMinStars, setBankMinStars] = useState(0);
@@ -45,6 +49,7 @@ export default function Draw() {
     try {
       const res = drawTeams(participants.map((p) => p.id), teams, opts, secureRng);
       setProposal(res);
+      setFromRoulette(false);
       setAnimating(true);
     } catch (e) {
       toast.show("error", e instanceof DrawError ? e.message : "No se pudo sortear");
@@ -85,7 +90,13 @@ export default function Draw() {
 
       {participants.length < 2 ? <EmptyState icon={UsersThree} title="Necesitas jugadores para sortear">Invita a tus amigos primero.</EmptyState> : null}
 
-      {canManage && participants.length >= 2 && (
+      {canManage && participants.length >= 2 && roulette && (
+        <TeamRoulette participants={participants} pool={teams.filter((tm) => pool.some((p) => p.id === tm.id))}
+          onCancel={() => setRoulette(false)}
+          onComplete={(picks) => { setProposal(picks); setFromRoulette(true); setAnimating(false); setRoulette(false); requestAnimationFrame(() => document.getElementById("res-h")?.scrollIntoView({ behavior: "smooth", block: "start" })); }} />
+      )}
+
+      {canManage && participants.length >= 2 && !roulette && (
         <section className="card space-y-4" aria-labelledby="opt-h">
           <h3 id="opt-h" className="text-lg uppercase">Opciones</h3>
           <Toggle id="o-rep" label="Evitar equipos repetidos" checked={opts.avoidRepeats} onChange={(v) => setOpts({ ...opts, avoidRepeats: v })} />
@@ -110,14 +121,21 @@ export default function Draw() {
             </div>
           </fieldset>
           <p className="help"><span className="font-display text-neon">{pool.length}</span> equipos disponibles para {participants.length} jugadores.</p>
-          <button className="btn-primary w-full" onClick={run} disabled={animating}>{proposal ? <><ArrowsClockwise size={20} weight="bold" aria-hidden />Repetir sorteo</> : <><Shuffle size={20} weight="bold" aria-hidden />Sortear</>}</button>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <button className="btn-primary" onClick={run} disabled={animating}>{proposal ? <><ArrowsClockwise size={20} weight="bold" aria-hidden />Repetir sorteo</> : <><Shuffle size={20} weight="bold" aria-hidden />Sortear</>}</button>
+            <button className="btn-secondary" onClick={() => setRoulette(true)} disabled={animating || pool.length === 0}><Target size={20} weight="bold" aria-hidden />Ruleta: elegir entre 3</button>
+          </div>
         </section>
       )}
 
       {current && (
         <section className="space-y-3" aria-labelledby="res-h">
           <h3 id="res-h" className="flex items-center gap-2 text-lg uppercase">{proposal ? "Resultado del sorteo" : "Equipos asignados"}{t.draw_confirmed ? <LockSimple size={18} weight="fill" className="text-neon" aria-label="Bloqueado" /> : null}</h3>
-          {proposal ? <DrawStage participants={participants} teams={teams} assignments={proposal} onDone={() => setAnimating(false)} />
+          {proposal && fromRoulette ? (
+            <ul className="grid gap-2 sm:grid-cols-2">{proposal.map((a) => { const p = participants.find((x) => x.id === a.participantId); const tm = teams.find((x) => x.id === a.teamId); return (
+              <li key={a.participantId} className="card flex items-center gap-3 !p-3">{p ? <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={40} /> : null}<span className="min-w-0 flex-1"><span className="block truncate font-bold">{p?.nickname || p?.display_name}</span><span className="block truncate text-[11px] uppercase tracking-wide text-white/60">{tm?.name}</span></span>{tm ? <TeamCrest team={tm} size={34} /> : null}</li>
+            ); })}</ul>
+          ) : proposal ? <DrawStage participants={participants} teams={teams} assignments={proposal} onDone={() => setAnimating(false)} />
             : <ul className="grid gap-2 sm:grid-cols-2">{current.map((a) => <li key={a.participantId} className="card !p-3"><PlayerChip participantId={a.participantId} lead="player" /></li>)}</ul>}
           {proposal && !animating && <p className="help">Diferencia entre el mejor y el peor equipo: {(ratingSpread(proposal, teams) / 4).toFixed(1)} ★</p>}
           {viewer.isOrganizer && !t.draw_confirmed && !animating && (

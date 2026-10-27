@@ -9,6 +9,7 @@ import { answerReport, clearResult, reportResult, saveOfficialResult, scheduleMa
 import { resultInputSchema } from "@/lib/schemas";
 import { stageLabel } from "@/lib/labels";
 import { ResultCard, ShareButton } from "@/components/ShareCard";
+import { MatchExtras } from "@/components/MatchExtras";
 import { CaretLeft, HourglassMedium, Question, Star } from "@phosphor-icons/react";
 
 function Stepper({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
@@ -137,6 +138,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
           <label className="text-sm">Agendar<input type="datetime-local" className="input mt-1" defaultValue={match.scheduled_at ? match.scheduled_at.slice(0, 16) : ""} onChange={async (e) => done(await scheduleMatch(matchId, e.target.value || null), "Horario guardado")} /></label>
         </div>
       )}
+      <MatchExtras match={match} />
       {!canOfficial && !canReport && !existing && <EmptyState icon={HourglassMedium} title="Aún sin resultado">{isPlayer && !snapshot.tournament.settings.player_reporting ? "El organizador registra los resultados de este torneo." : "Cuando se juegue, el resultado aparecerá aquí."}</EmptyState>}
       {toast.node}
     </div>

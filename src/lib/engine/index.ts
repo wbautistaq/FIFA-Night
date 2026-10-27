@@ -4,3 +4,4 @@ export * from "./fixtures";
 export * from "./draw";
 export * from "./standings";
 export * from "./scoring";
+export * from "./swiss";

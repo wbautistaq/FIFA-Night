@@ -154,3 +154,55 @@ export function rivalries(a: string, tournaments: HTournament[], participants: H
   for (const r of list) if (!r.tag && r.games >= 3 && Math.abs(margin(r)) <= 1) r.tag = "even";
   return list.sort((x, y) => y.games - x.games || x.opponentName.localeCompare(y.opponentName));
 }
+
+export interface EloEntry {
+  key: string;
+  rating: number;
+  /** Variación en el último partido (positivo = ganó puntos). */
+  lastChange: number;
+  peak: number;
+  played: number;
+}
+
+export const ELO_START = 1000;
+const ELO_K = 32;
+
+/** Multiplicador por diferencia de goles (Elo de selecciones de fútbol): las goleadas mueven más el ranking. */
+const goalFactor = (gd: number) => (gd <= 1 ? 1 : gd === 2 ? 1.5 : (11 + gd) / 8);
+
+/**
+ * Ranking Elo del grupo: recorre todos los partidos confirmados en orden cronológico.
+ * Victoria por penales cuenta como victoria (sin multiplicador de goles).
+ */
+export function eloRatings(participants: HParticipant[], matches: HMatch[], results: HResult[]): Map<string, EloEntry> {
+  const byId = new Map(participants.map((p) => [p.id, p]));
+  const resByMatch = new Map(results.map((r) => [r.match_id, r]));
+  const table = new Map<string, EloEntry>();
+  const entry = (key: string) => {
+    let e = table.get(key);
+    if (!e) table.set(key, (e = { key, rating: ELO_START, lastChange: 0, peak: ELO_START, played: 0 }));
+    return e;
+  };
+  const ordered = [...matches].sort((a, b) => a.played_at.localeCompare(b.played_at) || a.id.localeCompare(b.id));
+  for (const m of ordered) {
+    const r = resByMatch.get(m.id);
+    const h = m.home_id ? byId.get(m.home_id) : undefined;
+    const a = m.away_id ? byId.get(m.away_id) : undefined;
+    if (!r || !h || !a) continue;
+    const eh = entry(identityKey(h)), ea = entry(identityKey(a));
+    if (eh === ea) continue;
+    let score = r.home_score > r.away_score ? 1 : r.home_score < r.away_score ? 0 : 0.5;
+    if (score === 0.5 && r.home_pens !== null && r.away_pens !== null && r.home_pens !== r.away_pens) score = r.home_pens > r.away_pens ? 1 : 0;
+    const expected = 1 / (1 + 10 ** ((ea.rating - eh.rating) / 400));
+    const delta = Math.round(ELO_K * goalFactor(Math.abs(r.home_score - r.away_score)) * (score - expected));
+    eh.rating += delta;
+    ea.rating -= delta;
+    eh.lastChange = delta;
+    ea.lastChange = -delta;
+    eh.peak = Math.max(eh.peak, eh.rating);
+    ea.peak = Math.max(ea.peak, ea.rating);
+    eh.played++;
+    ea.played++;
+  }
+  return table;
+}

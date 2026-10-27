@@ -6,6 +6,7 @@ import type {
   TournamentFormat,
   TournamentSettings,
 } from "./types";
+import { swissPairings } from "./swiss";
 
 const BYE = Symbol("bye");
 type Slot = string | typeof BYE;
@@ -296,5 +297,13 @@ export function generateFixtures(
     }
     case "friendlies":
       return plan;
+    case "swiss": {
+      // Solo la primera ronda: las siguientes se emparejan con la clasificación (add_swiss_round)
+      const round = swissPairings(ids.map((id) => ({ id, points: 0, goalDifference: 0, goalsFor: 0 })), new Set(), new Set());
+      round.pairs.forEach(([home, away], i) => {
+        plan.matches.push({ id: uid(), stage: "league", round: 1, position: i + 1, leg: 1, home_id: home, away_id: away });
+      });
+      return plan;
+    }
   }
 }

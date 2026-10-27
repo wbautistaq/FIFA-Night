@@ -9,6 +9,7 @@ import type { Participant, Tournament } from "@/lib/types";
 import { DEFAULT_SETTINGS } from "@/lib/engine/types";
 import { DEFAULT_DRAW_OPTIONS, DrawError, drawTeams, type TeamLite } from "@/lib/engine/draw";
 import { secureRng } from "@/lib/engine/rng";
+import { recommendedSwissRounds } from "@/lib/engine/swiss";
 import { GAMER_AVATARS, emojiAvatar } from "@/lib/avatars";
 import { confirmDraw, saveDraw } from "@/app/actions/draw";
 
@@ -262,7 +263,7 @@ const quickSchema = z.object({
   name: z.string().trim().max(80).optional().or(z.literal("")),
   players: z.array(z.string().trim().min(1).max(40)).min(1, "Agrega al menos un jugador").max(31),
   includeMe: z.boolean(),
-  format: z.enum(["league", "league_double", "cup"]),
+  format: z.enum(["league", "league_double", "cup", "swiss"]),
   minStars: z.number().min(0).max(5),
   teams: z.enum(["clubs", "national", "all"]),
   balanced: z.boolean(),
@@ -290,7 +291,7 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
       format: q.format,
       max_players: Math.max(4, total),
       rules: "",
-      settings: DEFAULT_SETTINGS,
+      settings: q.format === "swiss" ? { ...DEFAULT_SETTINGS, swiss_rounds: recommendedSwissRounds(total) } : DEFAULT_SETTINGS,
     });
     if (!created.ok || !created.data) return fail(created.ok ? "No se pudo crear el torneo" : created.error);
     const id = created.data.id;

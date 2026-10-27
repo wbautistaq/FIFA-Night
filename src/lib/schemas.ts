@@ -2,7 +2,7 @@ import { z } from "zod";
 import { isValidEmojiAvatar } from "./avatars";
 
 export const platformSchema = z.enum(["presencial", "playstation", "xbox", "pc"]);
-export const formatSchema = z.enum(["league", "league_double", "cup", "double_elimination", "groups_playoffs", "friendlies"]);
+export const formatSchema = z.enum(["league", "league_double", "cup", "double_elimination", "groups_playoffs", "friendlies", "swiss"]);
 
 export const settingsSchema = z.object({
   penalties: z.boolean(),
@@ -15,6 +15,7 @@ export const settingsSchema = z.object({
   predictions: z.boolean(),
   exact_score_predictions: z.boolean(),
   wall: z.boolean(),
+  swiss_rounds: z.number().int().min(2).max(10).optional(),
 });
 
 export const tournamentInputSchema = z.object({

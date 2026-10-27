@@ -198,6 +198,21 @@ export interface Snapshot {
   posts: Post[];
   reactions: Reaction[];
   brackets: Bracket[];
+  proofs: MatchProof[];
+  mvpVotes: MvpVote[];
+}
+
+export interface MatchProof {
+  match_id: string;
+  url: string;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
+export interface MvpVote {
+  match_id: string;
+  voter_participant_id: string;
+  candidate_participant_id: string;
 }
 
 export interface Viewer {

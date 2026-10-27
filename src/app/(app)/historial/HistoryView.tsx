@@ -2,8 +2,8 @@
 
 import { useMemo, useState } from "react";
 import clsx from "clsx";
-import { ChartBar, Fire, Skull, Snowflake, Sword, Target, Trophy } from "@phosphor-icons/react";
-import { buildHistory, headToHead, identityKey, rivalries, type HMatch, type HParticipant, type HResult, type HTournament, type Rivalry } from "@/lib/history";
+import { CaretDown, CaretUp, ChartBar, Fire, Skull, Snowflake, Sword, Target, Trophy } from "@phosphor-icons/react";
+import { ELO_START, buildHistory, eloRatings, headToHead, identityKey, rivalries, type HMatch, type HParticipant, type HResult, type HTournament, type Rivalry } from "@/lib/history";
 import { Avatar, EmptyState } from "@/components/ui/primitives";
 
 type Tab = "rivales" | "ranking" | "h2h";
@@ -22,6 +22,8 @@ export function HistoryView({ me, tournaments, participants, matches, results }:
   const [a, setA] = useState(history.some((h) => h.key === myKey) ? myKey : (history[0]?.key ?? ""));
   const [b, setB] = useState(history.find((h) => h.key !== a)?.key ?? "");
   const h2h = useMemo(() => (a && b && a !== b ? headToHead(a, b, tournaments, participants, matches, results) : null), [a, b, tournaments, participants, matches, results]);
+  const elo = useMemo(() => eloRatings(participants, matches, results), [participants, matches, results]);
+  const ranked = useMemo(() => [...history].filter((h) => h.played > 0).sort((x, y) => (elo.get(y.key)?.rating ?? ELO_START) - (elo.get(x.key)?.rating ?? ELO_START) || x.name.localeCompare(y.name)), [history, elo]);
   const mine = useMemo(() => rivalries(myKey, tournaments, participants, matches, results), [myKey, tournaments, participants, matches, results]);
   // Avatar más reciente de cada jugador (sus participaciones pueden tener avatares distintos)
   const face = useMemo(() => {
@@ -83,20 +85,39 @@ export function HistoryView({ me, tournaments, participants, matches, results }:
       )}
 
       {tab === "ranking" && (
-        <div className="card overflow-x-auto !p-0">
-          <table className="w-full min-w-[640px] text-sm">
-            <caption className="sr-only">Estadísticas históricas por jugador</caption>
-            <thead className="bg-black/30 font-display text-[11px] uppercase tracking-wider text-white/60">
-              <tr><th className="p-2 text-left">Jugador</th>{["Torneos", "Títulos", "PJ", "G", "E", "P", "GF", "GC", "DG", "% V", "Racha", "Mejor", "MVP"].map((x) => <th key={x} scope="col" className="p-2 text-center">{x}</th>)}</tr>
-            </thead>
-            <tbody>{history.map((p, i) => (
-              <tr key={p.key} className={clsx("border-t border-white/5", p.key === myKey && "bg-neon/[.06] shadow-[inset_3px_0_0_#2ee6ff]")}>
-                <th scope="row" className="p-2 text-left font-semibold"><span className="flex items-center gap-2"><span className="w-4 text-center font-display text-white/50">{i + 1}</span>{avatar(p.key, 26)}<span className="truncate">{p.name}</span>{p.titles > 0 ? <Trophy size={14} weight="fill" className="text-amber-300" aria-label="Campeón" /> : null}</span></th>
-                {[p.tournaments, p.titles, p.played, p.won, p.drawn, p.lost, p.goalsFor, p.goalsAgainst, p.goalDifference, `${p.winRate}%`].map((v, j) => <td key={j} className="p-2 text-center tabular-nums">{v}</td>)}
-                <td className="p-2 text-center tabular-nums">{p.currentStreak > 0 ? <span className="inline-flex items-center gap-0.5 text-orange-300"><Fire size={12} weight="fill" aria-label="racha de victorias" />{p.currentStreak}</span> : p.currentStreak < 0 ? <span className="inline-flex items-center gap-0.5 text-sky-300"><Snowflake size={12} weight="fill" aria-label="racha de derrotas" />{-p.currentStreak}</span> : "–"}</td>
-                {[p.bestStreak, p.mvps].map((v, j) => <td key={j} className="p-2 text-center tabular-nums">{v}</td>)}
-              </tr>))}</tbody>
-          </table>
+        <div className="space-y-3">
+          {/* Podio Elo: los tres mejores del grupo */}
+          <ol className="grid grid-cols-3 gap-2" aria-label="Podio del ranking Elo">
+            {ranked.slice(0, 3).map((p, i) => (
+              <li key={p.key} className={clsx("card flex flex-col items-center gap-1 !p-3 text-center", i === 0 && "border-amber-300/50 shadow-[0_0_24px_-8px_rgba(251,191,36,.6)]")}>
+                <span className={clsx("grid h-6 w-6 place-items-center rounded-md font-display text-xs text-pitch-950", i === 0 ? "bg-amber-300" : i === 1 ? "bg-slate-300" : "bg-orange-400")}>{i + 1}</span>
+                {avatar(p.key, 44)}
+                <span className="w-full truncate text-sm font-bold">{p.name}</span>
+                <span className="font-display text-xl text-neon">{elo.get(p.key)?.rating ?? ELO_START}</span>
+              </li>
+            ))}
+          </ol>
+          <div className="card overflow-x-auto !p-0">
+            <table className="w-full min-w-[700px] text-sm">
+              <caption className="sr-only">Ranking Elo y estadísticas históricas por jugador</caption>
+              <thead className="bg-black/30 font-display text-[11px] uppercase tracking-wider text-white/60">
+                <tr><th className="p-2 text-left">Jugador</th><th scope="col" className="p-2 text-center text-neon">Elo</th>{["Máx.", "Torneos", "Títulos", "PJ", "G", "E", "P", "DG", "% V", "Racha", "MVP"].map((x) => <th key={x} scope="col" className="p-2 text-center">{x}</th>)}</tr>
+              </thead>
+              <tbody>{ranked.map((p, i) => {
+                const e = elo.get(p.key);
+                return (
+                  <tr key={p.key} className={clsx("border-t border-white/5", p.key === myKey && "bg-neon/[.06] shadow-[inset_3px_0_0_#2ee6ff]")}>
+                    <th scope="row" className="p-2 text-left font-semibold"><span className="flex items-center gap-2"><span className="w-4 text-center font-display text-white/50">{i + 1}</span>{avatar(p.key, 26)}<span className="truncate">{p.name}</span>{p.titles > 0 ? <Trophy size={14} weight="fill" className="text-amber-300" aria-label="Campeón" /> : null}</span></th>
+                    <td className="p-2 text-center"><span className="font-display text-neon tabular-nums">{e?.rating ?? ELO_START}</span>{e?.lastChange ? <span className={clsx("ml-1 inline-flex items-center text-[11px] tabular-nums", e.lastChange > 0 ? "text-emerald-300" : "text-rose-300")}>{e.lastChange > 0 ? <CaretUp size={10} weight="fill" aria-label="subió" /> : <CaretDown size={10} weight="fill" aria-label="bajó" />}{Math.abs(e.lastChange)}</span> : null}</td>
+                    {[e?.peak ?? ELO_START, p.tournaments, p.titles, p.played, p.won, p.drawn, p.lost, p.goalDifference, `${p.winRate}%`].map((v, j) => <td key={j} className="p-2 text-center tabular-nums">{v}</td>)}
+                    <td className="p-2 text-center tabular-nums">{p.currentStreak > 0 ? <span className="inline-flex items-center gap-0.5 text-orange-300"><Fire size={12} weight="fill" aria-label="racha de victorias" />{p.currentStreak}</span> : p.currentStreak < 0 ? <span className="inline-flex items-center gap-0.5 text-sky-300"><Snowflake size={12} weight="fill" aria-label="racha de derrotas" />{-p.currentStreak}</span> : "–"}</td>
+                    <td className="p-2 text-center tabular-nums">{p.mvps}</td>
+                  </tr>
+                );
+              })}</tbody>
+            </table>
+          </div>
+          <p className="help">Elo: todos empiezan con {ELO_START}. Ganar a alguien con más Elo da más puntos y las goleadas cuentan más.</p>
         </div>
       )}
 

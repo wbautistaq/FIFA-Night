@@ -4,7 +4,8 @@ export type TournamentFormat =
   | "cup"
   | "double_elimination"
   | "groups_playoffs"
-  | "friendlies";
+  | "friendlies"
+  | "swiss";
 
 export type MatchStage =
   | "league"
@@ -31,6 +32,8 @@ export interface TournamentSettings {
   predictions: boolean;
   exact_score_predictions: boolean;
   wall: boolean;
+  /** Rondas del sistema suizo (por defecto 3). */
+  swiss_rounds?: number;
 }
 
 export const DEFAULT_SETTINGS: TournamentSettings = {

@@ -17,7 +17,7 @@ const strip = <T>(list: (T & Record<string, unknown>)[], key: string): T[] => li
  * Todas las consultas salen en paralelo (una sola ronda de red): resultados y reacciones se filtran por torneo con joins.
  */
 export async function loadSnapshot(sb: SupabaseClient, tournamentId: string): Promise<Snapshot> {
-  const [tournamentRows, matches, participants, teams, assignments, rawResults, standings, stats, achievements, predictions, posts, rawReactions, brackets] = await Promise.all([
+  const [tournamentRows, matches, participants, teams, assignments, rawResults, standings, stats, achievements, predictions, posts, rawReactions, brackets, proofs, mvpVotes] = await Promise.all([
     rows<Snapshot["tournament"]>(sb.from("tournaments").select("*").eq("id", tournamentId).limit(1)),
     rows<Snapshot["matches"][number]>(sb.from("matches").select("*").eq("tournament_id", tournamentId).order("round").order("position")),
     rows<Snapshot["participants"][number]>(sb.from("tournament_participants").select("id,tournament_id,user_id,display_name,nickname,avatar_url,avatar_color,platform,gamer_id,role,group_name").eq("tournament_id", tournamentId).order("joined_at")),
@@ -31,6 +31,8 @@ export async function loadSnapshot(sb: SupabaseClient, tournamentId: string): Pr
     rows<Snapshot["posts"][number]>(sb.from("tournament_posts").select("id,author_participant_id,body,image_url,created_at").eq("tournament_id", tournamentId).order("created_at", { ascending: false }).limit(100)),
     rows<Snapshot["reactions"][number] & Record<string, unknown>>(sb.from("post_reactions").select("post_id,participant_id,reaction, tournament_posts!inner(tournament_id)").eq("tournament_posts.tournament_id", tournamentId)),
     rows<Snapshot["brackets"][number]>(sb.from("brackets").select("kind,rounds,has_third_place").eq("tournament_id", tournamentId)),
+    rows<Snapshot["proofs"][number]>(sb.from("match_proofs").select("match_id,url,uploaded_by,created_at").eq("tournament_id", tournamentId)),
+    rows<Snapshot["mvpVotes"][number]>(sb.from("mvp_votes").select("match_id,voter_participant_id,candidate_participant_id").eq("tournament_id", tournamentId)),
   ]);
   const tournament = tournamentRows[0];
   if (!tournament) throw new Error("Torneo no encontrado o sin acceso");
@@ -39,7 +41,7 @@ export async function loadSnapshot(sb: SupabaseClient, tournamentId: string): Pr
   const postIds = new Set(posts.map((p) => p.id));
   const reactions = strip<Snapshot["reactions"][number]>(rawReactions, "tournament_posts").filter((r) => postIds.has(r.post_id));
 
-  return { tournament, participants, teams, assignments, matches, results, standings, stats, achievements, predictions, posts, reactions, brackets } satisfies Snapshot;
+  return { tournament, participants, teams, assignments, matches, results, standings, stats, achievements, predictions, posts, reactions, brackets, proofs, mvpVotes } satisfies Snapshot;
 }
 
 export type { Row };

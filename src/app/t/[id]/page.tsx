@@ -7,6 +7,7 @@ import { MatchRow, PlayerChip } from "@/components/MatchRow";
 import { ChampionCard, ShareButton } from "@/components/ShareCard";
 import { ActionButton, EmptyState, useToast } from "@/components/ui/primitives";
 import { startTournament, cancelTournament, finishTournament } from "@/app/actions/tournaments";
+import { nextSwissRound } from "@/app/actions/match-extras";
 import { FORMAT_LABEL, PLATFORM_LABEL } from "@/lib/labels";
 import { format as fmt } from "date-fns";
 import { es } from "date-fns/locale";
@@ -106,6 +107,26 @@ export default function Overview() {
           <ActionButton className="btn-ghost text-rose-300" confirm="¿Cancelar el torneo? Esta acción no se puede deshacer." onAction={() => run(() => cancelTournament(id), "Torneo cancelado")}>Cancelar torneo</ActionButton>
         </section>
       )}
+
+      {t.format === "swiss" && t.status === "in_progress" && (() => {
+        const rounds = t.settings.swiss_rounds ?? 3;
+        const current = Math.max(0, ...matches.map((m) => m.round));
+        const roundDone = matches.length > 0 && matches.every((m) => ["finished", "cancelled"].includes(m.status));
+        return (
+          <section className="card space-y-3" aria-labelledby="swiss-h">
+            <div className="flex items-center justify-between gap-2">
+              <h2 id="swiss-h" className="section-title">Sistema suizo</h2>
+              <span className="chip">Ronda {current} de {rounds}</span>
+            </div>
+            <div className="flex gap-1" aria-hidden>{Array.from({ length: rounds }, (_, i) => <span key={i} className={`h-1.5 flex-1 rounded-full ${i < current ? "bg-neon" : "bg-white/15"}`} />)}</div>
+            {viewer.isOrganizer && roundDone && current < rounds ? (
+              <ActionButton className="btn-primary w-full" onAction={() => run(() => nextSwissRound(id), `¡Ronda ${current + 1} emparejada!`)}>Emparejar ronda {current + 1}</ActionButton>
+            ) : (
+              <p className="help !mt-0">{roundDone ? "Se jugaron todas las rondas." : "Cuando terminen todos los partidos de esta ronda, se emparejará la siguiente según la tabla, sin repetir rivales."}</p>
+            )}
+          </section>
+        );
+      })()}
 
       {toConfirm.length > 0 && (
         <section aria-labelledby="confirm-h" className="space-y-2">

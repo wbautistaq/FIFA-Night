@@ -8,6 +8,7 @@ export const FORMAT_LABEL: Record<TournamentFormat, string> = {
   double_elimination: "Doble eliminación",
   groups_playoffs: "Grupos + playoffs",
   friendlies: "Amistosos sueltos",
+  swiss: "Sistema suizo",
 };
 export const STATUS_LABEL: Record<TournamentStatus, string> = {
   draft: "Borrador",

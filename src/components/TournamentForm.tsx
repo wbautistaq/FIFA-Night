@@ -14,6 +14,7 @@ const FORMAT_HELP: Record<TournamentInput["format"], string> = {
   double_elimination: "Tienes que perder dos veces para quedar eliminado.",
   groups_playoffs: "Fase de grupos y luego llaves entre los clasificados.",
   friendlies: "Partidos sueltos que tú programas, con tabla acumulada.",
+  swiss: "Varias rondas: en cada una juegas contra alguien con tus mismos puntos y nunca repites rival.",
 };
 
 export function defaultTournamentInput(): TournamentInput {
@@ -84,6 +85,12 @@ export function TournamentForm({ initial, submitLabel, onSubmit, lockFormat }: {
           {(Object.keys(FORMAT_LABEL) as TournamentInput["format"][]).map((f) => <option key={f} value={f}>{FORMAT_LABEL[f]}</option>)}
         </select>
       </Field>
+
+      {v.format === "swiss" && (
+        <Field label="Número de rondas" htmlFor="srounds" help="Con 8 jugadores, 3 rondas bastan para tener un campeón claro.">
+          <input id="srounds" type="number" inputMode="numeric" min={2} max={10} className="input" value={v.settings.swiss_rounds ?? 3} onChange={(e) => setS({ swiss_rounds: Number(e.target.value) })} />
+        </Field>
+      )}
 
       {isGroups && (
         <div className="grid gap-4 sm:grid-cols-2">

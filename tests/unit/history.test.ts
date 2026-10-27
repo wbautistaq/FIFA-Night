@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildHistory, headToHead, identityKey, rivalries, type HMatch, type HParticipant, type HResult, type HTournament } from "@/lib/history";
+import { ELO_START, buildHistory, eloRatings, headToHead, identityKey, rivalries, type HMatch, type HParticipant, type HResult, type HTournament } from "@/lib/history";
 
 const P = (id: string, t: string, name: string, user: string | null = null): HParticipant => ({ id, tournament_id: t, user_id: user, display_name: name });
 const parts = [P("a1", "t1", "Ana", "ua"), P("b1", "t1", "Beto"), P("a2", "t2", "Ana", "ua"), P("b2", "t2", "beto ")];
@@ -58,5 +58,28 @@ describe("rivalidades", () => {
 
   it("sin partidos no hay rivalidades", () => {
     expect(rivalries("u:nadie", tournaments, ps, ms, rs)).toEqual([]);
+  });
+});
+
+describe("ranking Elo", () => {
+  it("empieza en 1000, es de suma cero y premia más las goleadas", () => {
+    const elo = eloRatings(parts, matches, results);
+    const ana = elo.get(identityKey(parts[0] as HParticipant))!;
+    const beto = elo.get(identityKey(parts[1] as HParticipant))!;
+    expect(ana.rating + beto.rating).toBe(2 * ELO_START);
+    expect(ana.rating).toBeGreaterThan(ELO_START);
+    expect(ana.played).toBe(4);
+    expect(ana.peak).toBeGreaterThanOrEqual(ana.rating);
+    // Último partido: Ana ganó 0-4 de visitante → sube
+    expect(ana.lastChange).toBeGreaterThan(0);
+    expect(beto.lastChange).toBe(-ana.lastChange);
+  });
+
+  it("una goleada mueve más puntos que una victoria por la mínima", () => {
+    const p2 = [P("x", "t", "X"), P("y", "t", "Y")];
+    const one = eloRatings(p2, [M("g1", "t", "x", "y", "2026-01-01")], [R("g1", 1, 0)]).get("n:x")!;
+    const four = eloRatings(p2, [M("g1", "t", "x", "y", "2026-01-01")], [R("g1", 4, 0)]).get("n:x")!;
+    expect(four.rating - ELO_START).toBeGreaterThan(one.rating - ELO_START);
+    expect(one.rating - ELO_START).toBe(16);
   });
 });

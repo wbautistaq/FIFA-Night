@@ -6,9 +6,9 @@ import { es } from "date-fns/locale";
 import { useT } from "@/components/TournamentShell";
 import { EmptyState } from "@/components/ui/primitives";
 import { markNotificationsRead } from "@/app/actions/social";
-import { Bell, CalendarBlank, CheckCircle, Crown, EnvelopeSimple, Fire, NotePencil, Shuffle, Trophy, type Icon } from "@phosphor-icons/react";
+import { Bell, CalendarBlank, CheckCircle, Crown, EnvelopeSimple, Fire, GameController, NotePencil, Shuffle, Trophy, type Icon } from "@phosphor-icons/react";
 
-const ICON: Record<string, Icon> = { invitation: EnvelopeSimple, draw_done: Shuffle, match_pending: CalendarBlank, result_reported: NotePencil, result_confirmed: CheckCircle, playoffs_start: Fire, new_leader: Crown, tournament_finished: Trophy };
+const ICON: Record<string, Icon> = { your_turn: GameController, invitation: EnvelopeSimple, draw_done: Shuffle, match_pending: CalendarBlank, result_reported: NotePencil, result_confirmed: CheckCircle, playoffs_start: Fire, new_leader: Crown, tournament_finished: Trophy };
 
 export default function Notifications() {
   const { notifications, id, refresh } = useT();

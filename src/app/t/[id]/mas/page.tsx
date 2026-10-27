@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, CaretRight, ChartBar, ChatsCircle, GearSix, Shuffle, Sliders, Sparkle, Television, UserPlus, type Icon } from "@phosphor-icons/react";
+import { Bell, CaretRight, ChartBar, ChatsCircle, GameController, GearSix, Shuffle, Sliders, Sparkle, Television, UserPlus, type Icon } from "@phosphor-icons/react";
 import { useT } from "@/components/TournamentShell";
 
 export default function More() {
@@ -9,6 +9,7 @@ export default function More() {
   const b = `/t/${id}`;
   const status = snapshot.tournament.status;
   const items: { href: string; Icon: Icon; label: string; hint: string; show: boolean }[] = [
+    { href: `${b}/en-vivo`, Icon: GameController, label: "Noche en vivo", hint: "Consolas, cola y quién sigue", show: status === "in_progress" },
     { href: `${b}/estadisticas`, Icon: ChartBar, label: "Estadísticas", hint: "Goleadores, logros e historial", show: true },
     { href: `${b}/muro`, Icon: ChatsCircle, label: "Muro del torneo", hint: "Comentarios y fotos del grupo", show: snapshot.tournament.settings.wall },
     { href: `${b}/tv`, Icon: Television, label: "Modo TV", hint: "Pantalla grande para la sala", show: true },

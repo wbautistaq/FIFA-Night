@@ -100,6 +100,16 @@ export default function Overview() {
         </section>
       )}
 
+      {t.status === "in_progress" && (
+        <Link href={`${base}/en-vivo`} className="card-glow card-interactive flex items-center gap-3 !py-4">
+          <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-volt/50 to-blaze/30 text-neon ring-1 ring-white/10" aria-hidden><GameController size={28} weight="duotone" /></span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-lg uppercase">Noche en vivo</span>
+            <span className="block text-sm text-white/65">{viewer.isOrganizer ? "Reparte los partidos entre consolas y llama a jugar" : "Qué se juega en cada consola y cuándo te toca"}</span>
+          </span>
+        </Link>
+      )}
+
       {t.status === "in_progress" && viewer.isOrganizer && (
         <section className="card flex flex-wrap gap-2">
           <Link href={`${base}/tv`} className="btn-primary flex-1"><Television size={20} weight="bold" aria-hidden />Modo TV</Link>

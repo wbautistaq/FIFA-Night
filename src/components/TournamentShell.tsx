@@ -6,6 +6,7 @@ import { createContext, useContext, type ReactNode } from "react";
 import { useTournament } from "@/hooks/useTournament";
 import { Bell, CalendarBlank, CaretLeft, ChartBar, House, ListNumbers, SquaresFour, TreeStructure, type Icon } from "@phosphor-icons/react";
 import { ErrorState } from "@/components/ui/primitives";
+import { TurnAlert } from "@/components/TurnAlert";
 import { STATUS_LABEL } from "@/lib/labels";
 
 type Ctx = ReturnType<typeof useTournament> & { snapshot: NonNullable<ReturnType<typeof useTournament>["snapshot"]>; viewer: NonNullable<ReturnType<typeof useTournament>["viewer"]>; derived: NonNullable<ReturnType<typeof useTournament>["derived"]>; id: string };
@@ -86,6 +87,7 @@ export function TournamentShell({ id, children }: { id: string; children: ReactN
           </Link>
         </header>
         <main id="main">{children}</main>
+        <TurnAlert tournamentId={id} participantId={ctx.viewer.participantId} matches={ctx.snapshot.matches} participants={ctx.derived.participants} teamOf={ctx.derived.teamOf} />
         <nav aria-label="Secciones del torneo" className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),.75rem)]">
           <ul className="mx-auto flex max-w-2xl rounded-2xl border border-white/10 bg-pitch-900/85 p-1 shadow-[0_-8px_40px_-12px_rgba(139,92,246,.45)] backdrop-blur-xl">
             {navFor(ctx.snapshot.tournament.format).map((n) => {

@@ -28,6 +28,8 @@ export interface Tournament {
   draw_confirmed: boolean;
   champion_participant_id: string | null;
   tv_state: { view: "auto" | "next" | "standings" | "bracket" | "scorers" | "results" };
+  /** Consolas/TVs para la noche en vivo (1–8). */
+  stations: number;
   created_at: string;
 }
 
@@ -85,6 +87,9 @@ export interface Match {
   winner_id: string | null;
   is_bye: boolean;
   mvp_id: string | null;
+  /** Consola donde se llamó a jugar el partido. */
+  station: number | null;
+  called_at: string | null;
 }
 
 export interface MatchResult {

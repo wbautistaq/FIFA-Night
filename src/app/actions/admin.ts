@@ -6,6 +6,7 @@ import { errorMessage, fail, ok, type ActionResult } from "@/lib/actor";
 import { audit, requireAdmin } from "@/lib/admin";
 import { newAccessCode } from "@/lib/access-code";
 import { createAdminClient } from "@/lib/supabase/server";
+import { describeDevice, ONLINE_WINDOW_MS, type Device } from "@/lib/device";
 
 const uuid = z.string().uuid();
 const email = z.string().trim().toLowerCase().email("Correo inválido");
@@ -43,18 +44,35 @@ export interface AdminLogEntry {
   createdAt: string;
 }
 
+export interface AdminSession {
+  id: string;
+  userId: string;
+  email: string | null;
+  name: string | null;
+  createdAt: string;
+  lastActiveAt: string;
+  /** Pasó la verificación en dos pasos en esa sesión. */
+  mfa: boolean;
+  device: string;
+  deviceKind: Device["kind"];
+  /** Es la sesión desde la que se está viendo el panel. */
+  current: boolean;
+}
+
 export interface AdminOverview {
   users: AdminUser[];
   tournaments: AdminTournament[];
   log: AdminLogEntry[];
-  totals: { users: number; tournaments: number; active: number; matches: number; results: number };
+  /** null si la base de datos aún no tiene la función de sesiones (migración 17). */
+  sessions: AdminSession[] | null;
+  totals: { users: number; tournaments: number; active: number; matches: number; results: number; onlineUsers: number };
 }
 
 /** Datos del panel: usuarios, torneos, totales y las últimas acciones registradas. */
 export async function loadAdminOverview(): Promise<AdminOverview> {
-  await requireAdmin();
+  const admin = await requireAdmin();
   const db = createAdminClient();
-  const [usersRes, profiles, tournaments, participants, matches, results, log] = await Promise.all([
+  const [usersRes, profiles, tournaments, participants, matches, results, log, sessionsRes] = await Promise.all([
     db.auth.admin.listUsers({ page: 1, perPage: 500 }),
     db.from("profiles").select("id,display_name"),
     db.from("tournaments").select("id,name,status,format,created_at,owner_id").order("created_at", { ascending: false }),
@@ -62,7 +80,10 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
     db.from("matches").select("tournament_id"),
     db.from("match_results").select("id", { count: "exact", head: true }),
     db.from("admin_audit_log").select("*").order("created_at", { ascending: false }).limit(100),
+    db.rpc("admin_list_sessions"),
   ]);
+  type SessionRow = { session_id: string; user_id: string; email: string | null; created_at: string; last_active_at: string; aal: string | null; user_agent: string | null };
+  const sessionRows = sessionsRes.error ? null : ((sessionsRes.data ?? []) as SessionRow[]);
   if (usersRes.error) throw usersRes.error;
   const names = new Map((profiles.data ?? []).map((p) => [p.id as string, p.display_name as string]));
   const count = (rows: { tournament_id: string }[] | null, id: string) => (rows ?? []).filter((r) => r.tournament_id === id).length;
@@ -99,12 +120,21 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
       details: (l.details ?? {}) as Record<string, unknown>,
       createdAt: l.created_at as string,
     })),
+    sessions: sessionRows && sessionRows.map((s) => {
+      const d = describeDevice(s.user_agent);
+      return {
+        id: s.session_id, userId: s.user_id, email: s.email, name: names.get(s.user_id) ?? null,
+        createdAt: s.created_at, lastActiveAt: s.last_active_at, mfa: s.aal === "aal2",
+        device: d.label, deviceKind: d.kind, current: s.session_id === admin.sessionId,
+      };
+    }),
     totals: {
       users: usersRes.data.users.length,
       tournaments: ts.length,
       active: ts.filter((t) => t.status === "in_progress").length,
       matches: (matches.data ?? []).length,
       results: results.count ?? 0,
+      onlineUsers: new Set((sessionRows ?? []).filter((s) => Date.now() - Date.parse(s.last_active_at) < ONLINE_WINDOW_MS).map((s) => s.user_id)).size,
     },
   };
 }
@@ -154,6 +184,23 @@ export async function adminRevokeSessions(userId: string): Promise<ActionResult<
     if (error) throw error;
     await audit(admin, "Cerró sesiones", "user", id, { email: await userLabel(id), sesiones: data });
     return ok({ sessions: (data as number) ?? 0 });
+  } catch (e) {
+    return fail(errorMessage(e));
+  }
+}
+
+/** Cierra una sola sesión (un dispositivo concreto). La que usa el administrador no se puede cerrar desde aquí. */
+export async function adminRevokeSession(sessionId: string): Promise<ActionResult> {
+  try {
+    const admin = await requireAdmin();
+    const id = uuid.parse(sessionId);
+    if (id === admin.sessionId) return fail("Esa es tu sesión actual: usa «Cerrar sesión» en tu perfil");
+    const { data, error } = await createAdminClient().rpc("admin_revoke_session", { p_session: id });
+    if (error) throw error;
+    if (!data) return fail("Esa sesión ya estaba cerrada");
+    await audit(admin, "Cerró una sesión", "user", data as string, { email: await userLabel(data as string), sesion: id });
+    revalidatePath("/admin");
+    return ok();
   } catch (e) {
     return fail(errorMessage(e));
   }

@@ -11,10 +11,11 @@ import type { TournamentStatus } from "@/lib/types";
 import type { ActionResult } from "@/lib/actor";
 import {
   adminCancelTournament, adminCreateUser, adminDeleteTournament, adminDeleteUser, adminGenerateAccessCode,
-  adminRecomputeTournament, adminRevokeSessions, adminSetBan, type AdminOverview, type AdminUser,
+  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetBan, type AdminOverview, type AdminUser,
 } from "@/app/actions/admin";
+import { SessionsTab } from "./SessionsTab";
 
-const TABS = ["Resumen", "Usuarios", "Torneos", "Registro"] as const;
+const TABS = ["Resumen", "Usuarios", "Sesiones", "Torneos", "Registro"] as const;
 type Tab = (typeof TABS)[number];
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("es", { dateStyle: "short", timeStyle: "short" }) : "Nunca");
@@ -88,6 +89,7 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {([
             ["Usuarios", data.totals.users],
+            ["En línea ahora", data.totals.onlineUsers],
             ["Torneos", data.totals.tournaments],
             ["En curso", data.totals.active],
             ["Partidos", data.totals.matches],
@@ -100,6 +102,12 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
             </div>
           ))}
         </div>
+      )}
+
+      {tab === "Sesiones" && (
+        <SessionsTab sessions={data.sessions}
+          onRevokeOne={async (s) => { await run(adminRevokeSession(s.id), "Sesión cerrada"); }}
+          onRevokeAll={async (userId) => { await run(adminRevokeSessions(userId), (d) => `Sesiones cerradas: ${d?.sessions ?? 0}`); }} />
       )}
 
       {tab === "Usuarios" && (

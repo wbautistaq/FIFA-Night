@@ -7,6 +7,8 @@ export interface AdminState {
   aal: string | null;
   userId: string | null;
   email: string | null;
+  /** Sesión (dispositivo) desde la que se consulta, para no cerrarla por error. */
+  sessionId: string | null;
 }
 
 /**
@@ -16,18 +18,20 @@ export interface AdminState {
 export async function adminState(): Promise<AdminState> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
-  const claims = data?.claims as { sub?: string; email?: string; aal?: string; app_metadata?: { role?: string } } | undefined;
+  const claims = data?.claims as { sub?: string; email?: string; aal?: string; session_id?: string; app_metadata?: { role?: string } } | undefined;
   return {
     isAdmin: claims?.app_metadata?.role === "admin",
     aal: claims?.aal ?? null,
     userId: claims?.sub ?? null,
     email: claims?.email ?? null,
+    sessionId: claims?.session_id ?? null,
   };
 }
 
 export interface AdminContext {
   userId: string;
   email: string | null;
+  sessionId: string | null;
 }
 
 /** Exige administrador con verificación en dos pasos completada. Úsalo al inicio de cada acción. */
@@ -35,7 +39,7 @@ export async function requireAdmin(): Promise<AdminContext> {
   const s = await adminState();
   if (!s.isAdmin || !s.userId) throw new Error("No autorizado");
   if (s.aal !== "aal2") throw new Error("Confirma tu código de verificación en dos pasos");
-  return { userId: s.userId, email: s.email };
+  return { userId: s.userId, email: s.email, sessionId: s.sessionId };
 }
 
 /** Registra una acción de administración. Si el registro falla, la acción se considera fallida. */

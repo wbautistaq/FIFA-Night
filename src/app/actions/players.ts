@@ -62,6 +62,24 @@ export async function addPlayers(tournamentId: string, userIds: string[]): Promi
   }
 }
 
+export type GuestNameStatus = "free" | "self" | "account";
+
+/**
+ * ¿Se puede usar este nombre para un invitado? "self": es tu propio apodo; "account": es el apodo de otra
+ * cuenta (hay que agregarla por su perfil). La búsqueda nunca te muestra a ti, por eso hace falta esta comprobación.
+ */
+export async function guestNameStatus(name: string): Promise<ActionResult<{ status: GuestNameStatus }>> {
+  try {
+    const n = z.string().trim().min(1).max(40).parse(name);
+    const { user } = await requireUser();
+    const { data, error } = await createAdminClient().rpc("nickname_owner", { p_name: n });
+    if (error) throw error;
+    return ok({ status: !data ? "free" : data === user.id ? "self" : "account" });
+  } catch (e) {
+    return fail(errorMessage(e));
+  }
+}
+
 /** ¿Está libre este apodo? Devuelve el mensaje de error si no sirve. */
 export async function checkNickname(nickname: string): Promise<ActionResult<{ available: boolean }>> {
   try {

@@ -80,7 +80,7 @@ export default function QuickTournamentPage() {
       <section className="card space-y-3" aria-labelledby="qp">
         <h2 id="qp" className="text-lg uppercase">Jugadores <span className="font-sans text-sm normal-case text-white/60">({total})</span></h2>
         <Toggle id="q-me" label="Yo también juego" checked={includeMe} onChange={setIncludeMe} />
-        <PlayerPicker value={players} onChange={setPlayers} max={includeMe ? 31 : 32} />
+        <PlayerPicker value={players} onChange={setPlayers} max={includeMe ? 31 : 32} selfHint={includeMe ? "Ya estás incluido con «Yo también juego»." : "Para jugar, activa «Yo también juego»."} />
         {guests > 0 ? <p className="help">{guests === 1 ? "1 invitado" : `${guests} invitados`}: sus partidos no quedan en un perfil propio hasta que creen su cuenta y lo vinculen.</p> : null}
       </section>
 

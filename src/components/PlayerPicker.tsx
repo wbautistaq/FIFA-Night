@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import { CheckCircle, MagnifyingGlass, Plus, UserCircleDashed, X } from "@phosphor-icons/react";
 import { Avatar } from "@/components/ui/primitives";
-import { findPlayers, myPlayers, type PlayerOption } from "@/app/actions/players";
+import { findPlayers, guestNameStatus, myPlayers, type GuestNameStatus, type PlayerOption } from "@/app/actions/players";
 import { normName } from "@/lib/names";
 
 export type PickedPlayer =
@@ -18,7 +18,7 @@ const optionName = (o: PlayerOption) => o.nickname || o.displayName;
  * Elegir jugadores: primero los que tienen cuenta ("mis jugadores" y búsqueda por apodo);
  * los invitados se escriben a mano como excepción y no tienen perfil propio.
  */
-export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserIds, excludeNames, max }: {
+export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserIds, excludeNames, max, selfHint = "No puedes agregarte como invitado." }: {
   value: PickedPlayer[];
   onChange: (v: PickedPlayer[]) => void;
   allowGuests?: boolean;
@@ -26,11 +26,16 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
   excludeUserIds?: ReadonlySet<string>;
   excludeNames?: ReadonlySet<string>;
   max?: number;
+  /** Qué hacer si alguien escribe su propio apodo (p. ej. "activa «Yo también juego»"). */
+  selfHint?: string;
 }) {
   const [friends, setFriends] = useState<PlayerOption[] | null>(null);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PlayerOption[]>([]);
   const [searching, setSearching] = useState(false);
+  // Estado del texto como nombre de invitado: ¿es mi apodo o el de otra cuenta?
+  const [nameStatus, setNameStatus] = useState<{ name: string; status: GuestNameStatus } | null>(null);
+  const [guestError, setGuestError] = useState<string | null>(null);
 
   useEffect(() => { myPlayers().then((r) => setFriends(r.ok ? (r.data ?? []) : [])); }, []);
 
@@ -40,8 +45,9 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
     if (q.length < 3 || q.includes(",")) { setResults([]); return; }
     setSearching(true);
     const t = setTimeout(async () => {
-      const r = await findPlayers(q);
+      const [r, st] = await Promise.all([findPlayers(q), guestNameStatus(q)]);
       setResults(r.ok ? (r.data ?? []) : []);
+      setNameStatus(st.ok && st.data ? { name: q, status: st.data.status } : null);
       setSearching(false);
     }, 300);
     return () => clearTimeout(t);
@@ -61,23 +67,34 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
     if (picked.has(`u:${o.userId}`)) onChange(value.filter((p) => !(p.kind === "user" && p.userId === o.userId)));
     else addUser(o);
   }
-  function addGuests(raw: string) {
+  const conflictMessage = (n: string, status: GuestNameStatus) =>
+    status === "self" ? `«${n}» eres tú. ${selfHint}` : `«${n}» tiene cuenta: búscalo por su apodo y agrégalo con su perfil, no como invitado.`;
+
+  async function addGuests(raw: string) {
     const names = raw.split(/[,\n]/).map((n) => n.trim()).filter((n) => n.length > 0 && n.length <= 40);
+    // Cada nombre se comprueba en el servidor: un invitado nunca puede llevar el apodo de una cuenta (ni el tuyo)
+    const checks = await Promise.all(names.map((n) => guestNameStatus(n)));
     const next = [...value];
-    for (const n of names) {
-      if (max !== undefined && next.length >= max) break;
+    const problems: string[] = [];
+    names.forEach((n, i) => {
+      const st = checks[i];
+      if (!st?.ok || !st.data) return void problems.push(`No se pudo comprobar «${n}».`);
+      if (st.data.status !== "free") return void problems.push(conflictMessage(n, st.data.status));
+      if (max !== undefined && next.length >= max) return;
       if (!next.some((p) => normName(p.name) === normName(n)) && !excludeNames?.has(normName(n))) next.push({ kind: "guest", name: n });
-    }
+    });
     onChange(next);
-    setQuery("");
+    setGuestError(problems.length ? problems.join(" ") : null);
+    if (!problems.length) setQuery("");
   }
 
   const q = query.trim();
   const exact = results.find((o) => normName(optionName(o)) === normName(q));
+  const qConflict = nameStatus && nameStatus.name === q && nameStatus.status !== "free" ? nameStatus.status : null;
   function submit() {
     if (!q) return;
     if (exact && !taken(exact)) return addUser(exact);
-    if (allowGuests) addGuests(q);
+    if (allowGuests) void addGuests(q);
   }
 
   return (
@@ -88,13 +105,15 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
           <span className="relative flex-1">
             <MagnifyingGlass size={18} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-white/50" aria-hidden />
             <input id="pp-q" className="input pl-10" autoComplete="off" placeholder={allowGuests ? "Apodo, o nombre de un invitado" : "Apodo del jugador"}
-              value={query} onChange={(e) => setQuery(e.target.value)} disabled={full} aria-describedby="pp-help" />
+              value={query} onChange={(e) => { setQuery(e.target.value); setGuestError(null); }} disabled={full} aria-describedby="pp-help" />
           </span>
           <button className="btn-secondary !min-h-12 !w-12 !px-0" aria-label="Agregar" disabled={!q || full}><Plus size={22} weight="bold" aria-hidden /></button>
         </form>
         <p id="pp-help" className="help !mt-0">
           {full ? `Llegaste al máximo de ${max} jugadores.` : allowGuests ? "Busca por apodo a quien tiene cuenta. Si no tiene, escribe su nombre: entra como invitado." : "Este torneo es solo para jugadores con cuenta: búscalos por su apodo."}
         </p>
+
+        {guestError ? <p role="alert" className="error-text">{guestError}</p> : null}
 
         {q.length >= 3 && !q.includes(",") && (
           <ul className="space-y-1.5" aria-live="polite">
@@ -108,9 +127,10 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
               </li>
             ))}
             {searching ? <li className="help">Buscando…</li> : null}
-            {!searching && allowGuests && !exact && !nameTaken(q) && (
+            {!searching && qConflict && !exact ? <li role="alert" className="rounded-xl border border-amber-300/40 bg-amber-300/10 p-2.5 text-sm text-amber-100">{conflictMessage(q, qConflict)}</li> : null}
+            {!searching && allowGuests && !exact && !qConflict && !nameTaken(q) && (
               <li>
-                <button type="button" disabled={full} onClick={() => addGuests(q)} className="flex w-full items-center gap-3 rounded-xl border border-dashed border-white/20 p-2 text-left text-sm transition hover:border-white/40">
+                <button type="button" disabled={full} onClick={() => void addGuests(q)} className="flex w-full items-center gap-3 rounded-xl border border-dashed border-white/20 p-2 text-left text-sm transition hover:border-white/40">
                   <UserCircleDashed size={34} className="text-white/50" aria-hidden />
                   <span className="min-w-0 flex-1"><span className="block truncate font-semibold">Agregar «{q}» como invitado</span><span className="block text-xs text-white/55">Sin cuenta: sus partidos no quedan en un perfil propio</span></span>
                 </button>

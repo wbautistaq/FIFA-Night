@@ -41,7 +41,7 @@ export function stageLabel(stage: MatchStage, round: number, totalRounds?: numbe
 export const ACHIEVEMENTS: Record<string, { icon: string; title: string; description: string }> = {
   first_title: { icon: "🏆", title: "Primer título", description: "Ganó su primer torneo" },
   top_scorer: { icon: "⚽", title: "Goleador", description: "Más goles del torneo" },
-  unbeaten: { icon: "🛡️", title: "Imbatido", description: "Terminó sin perder" },
+  unbeaten: { icon: "🛡️", title: "Imbatido", description: "Terminó sin perder (ni por penales)" },
   clasico_king: { icon: "👑", title: "Rey del clásico", description: "La mayor goleada del torneo" },
   worst_defense: { icon: "🥅", title: "Peor defensa", description: "Más goles recibidos" },
   penalty_specialist: { icon: "🎯", title: "Especialista en penales", description: "Más tandas ganadas" },

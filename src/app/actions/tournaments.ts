@@ -12,6 +12,7 @@ import { DEFAULT_DRAW_OPTIONS, DrawError, drawTeams, type TeamLite } from "@/lib
 import { secureRng } from "@/lib/engine/rng";
 import { recommendedSwissRounds } from "@/lib/engine/swiss";
 import { bestGroups, groupSizes } from "@/lib/engine/advice";
+import { guestNameConflict, normName } from "@/lib/people";
 import { GAMER_AVATARS, emojiAvatar } from "@/lib/avatars";
 import { confirmDraw, saveDraw } from "@/app/actions/draw";
 
@@ -123,6 +124,8 @@ export async function addParticipant(tournamentId: string, input: unknown): Prom
     if (!actor.isOrganizer) return fail("Solo el organizador puede agregar participantes");
     const { data: tr } = await actor.client.from("tournaments").select("settings").eq("id", tournamentId).single();
     if ((tr?.settings as { accounts_only?: boolean } | null)?.accounts_only) return fail("Este torneo es solo para jugadores con cuenta: búscalos por su apodo");
+    const conflict = await guestNameConflict([parsed.display_name], "organizer");
+    if (conflict) return fail(conflict);
     const { count } = await actor.client.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", tournamentId);
     const { error } = await actor.client.from("tournament_participants").insert({
       tournament_id: tournamentId,
@@ -138,7 +141,7 @@ export async function addParticipant(tournamentId: string, input: unknown): Prom
   } catch (e) {
     if (e instanceof z.ZodError) return fail(e.issues[0]?.message ?? "Datos inválidos");
     const msg = errorMessage(e);
-    return fail(/participants_name_uniq|ya existe/i.test(msg) ? "Ya hay un participante con ese nombre" : msg);
+    return fail(/participants_name|ya existe/i.test(msg) ? "Ya hay un participante con ese nombre" : msg);
   }
 }
 
@@ -161,6 +164,8 @@ export async function replaceParticipant(tournamentId: string, participantId: st
     const parsed = participantInputSchema.parse(input);
     const actor = await requireActor(uuid.parse(tournamentId));
     if (!actor.isOrganizer) return fail("Solo el organizador puede reemplazar participantes");
+    const conflict = await guestNameConflict([parsed.display_name], "organizer");
+    if (conflict) return fail(conflict);
     const { data: updated, error } = await actor.client.from("tournament_participants").update({
       display_name: parsed.display_name,
       nickname: parsed.nickname || null,
@@ -336,6 +341,10 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
     const total = names.length + members.length + (q.includeMe ? 1 : 0);
     if (total < 4) return fail("Se necesitan al menos 4 jugadores (contándote a ti si juegas)");
     if (total > 32) return fail("Máximo 32 jugadores");
+    // Nombres repetidos con otra escritura ("Beto" y "Betó") y apodos de jugadores con cuenta
+    if (new Set(names.map(normName)).size !== names.length) return fail("Hay invitados repetidos con distinta escritura");
+    const conflict = await guestNameConflict(names, "organizer");
+    if (conflict) return fail(conflict);
 
     const created = await createTournament({
       name: q.name || `Noche FIFA ${new Date().toLocaleDateString("es", { day: "numeric", month: "short" })}`,
@@ -370,7 +379,7 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
           avatar_url: emojiAvatar(GAMER_AVATARS[Math.floor(secureRng() * GAMER_AVATARS.length)]!.emoji),
         })),
       );
-      if (pe) throw new Error(/participants_name_uniq|duplicate/i.test(pe.message) ? "Hay un invitado con el mismo nombre que un jugador con cuenta" : pe.message);
+      if (pe) throw new Error(/participants_name|duplicate/i.test(pe.message) ? "Hay un invitado con el mismo nombre que un jugador con cuenta" : pe.message);
     }
 
     const [{ data: teams, error: te }, { data: ps, error: pse }] = await Promise.all([

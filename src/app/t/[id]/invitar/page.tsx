@@ -11,6 +11,7 @@ import { currentInviteToken, regenerateInvitation, revokeInvitations } from "@/a
 import { addParticipant, removeParticipant, replaceParticipant } from "@/app/actions/tournaments";
 import { addPlayers } from "@/app/actions/players";
 import { PlayerPicker, type PickedPlayer } from "@/components/PlayerPicker";
+import { normName } from "@/lib/names";
 import { participantInputSchema } from "@/lib/schemas";
 import { LockSimple, UsersThree } from "@phosphor-icons/react";
 
@@ -36,7 +37,7 @@ export default function Invite() {
   const accountsOnly = Boolean(t.settings.accounts_only);
   const [toAdd, setToAdd] = useState<PickedPlayer[]>([]);
   const inTournamentUsers = useMemo(() => new Set(participants.flatMap((p) => (p.user_id ? [p.user_id] : []))), [participants]);
-  const inTournamentNames = useMemo(() => new Set(participants.map((p) => p.display_name.toLowerCase())), [participants]);
+  const inTournamentNames = useMemo(() => new Set(participants.map((p) => normName(p.display_name))), [participants]);
 
   async function addSelected() {
     const users = toAdd.flatMap((p) => (p.kind === "user" ? [p.userId] : []));

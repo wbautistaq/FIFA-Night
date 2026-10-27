@@ -5,6 +5,7 @@ import { z } from "zod";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
 import { errorMessage, fail, guestCookieName, ok, participantForGuestToken, requireActor, type ActionResult } from "@/lib/actor";
 import { participantInputSchema } from "@/lib/schemas";
+import { guestNameConflict } from "@/lib/people";
 
 const uuid = z.string().uuid();
 const token = z.string().regex(/^[a-f0-9]{36}$/, "Link de invitación inválido");
@@ -115,6 +116,8 @@ export async function joinByToken(rawToken: string, input: unknown): Promise<Act
     } else {
       const { data: tr } = await admin.from("tournaments").select("settings").eq("id", inv.tournament_id).single();
       if ((tr?.settings as { accounts_only?: boolean } | null)?.accounts_only) return fail("Este torneo es solo para jugadores con cuenta. Inicia sesión para unirte.");
+      const conflict = await guestNameConflict([parsed.display_name], "self");
+      if (conflict) return fail(conflict);
     }
     const { count } = await admin.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", inv.tournament_id);
     // Con cuenta: se reutiliza el avatar del perfil; invitado: el emoticono elegido al unirse
@@ -137,7 +140,7 @@ export async function joinByToken(rawToken: string, input: unknown): Promise<Act
       .select("id")
       .single();
     if (error) {
-      if (/participants_name_uniq|duplicate/i.test(error.message)) return fail("Ya hay alguien con ese nombre en el torneo");
+      if (/participants_name|duplicate/i.test(error.message)) return fail("Ya hay alguien con ese nombre en el torneo");
       throw error;
     }
     await admin.from("invitations").update({ uses: inv.uses + 1 }).eq("id", inv.id);

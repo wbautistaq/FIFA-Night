@@ -5,12 +5,13 @@ import clsx from "clsx";
 import { CheckCircle, MagnifyingGlass, Plus, UserCircleDashed, X } from "@phosphor-icons/react";
 import { Avatar } from "@/components/ui/primitives";
 import { findPlayers, myPlayers, type PlayerOption } from "@/app/actions/players";
+import { normName } from "@/lib/names";
 
 export type PickedPlayer =
   | { kind: "user"; userId: string; name: string; avatarUrl: string | null }
   | { kind: "guest"; name: string };
 
-const keyOf = (p: PickedPlayer) => (p.kind === "user" ? `u:${p.userId}` : `g:${p.name.toLowerCase()}`);
+const keyOf = (p: PickedPlayer) => (p.kind === "user" ? `u:${p.userId}` : `g:${normName(p.name)}`);
 const optionName = (o: PlayerOption) => o.nickname || o.displayName;
 
 /**
@@ -21,7 +22,7 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
   value: PickedPlayer[];
   onChange: (v: PickedPlayer[]) => void;
   allowGuests?: boolean;
-  /** Ya están en el torneo. */
+  /** Ya están en el torneo (nombres normalizados con normName). */
   excludeUserIds?: ReadonlySet<string>;
   excludeNames?: ReadonlySet<string>;
   max?: number;
@@ -49,7 +50,7 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
   const picked = useMemo(() => new Set(value.map(keyOf)), [value]);
   const full = max !== undefined && value.length >= max;
   const taken = (o: PlayerOption) => picked.has(`u:${o.userId}`) || Boolean(excludeUserIds?.has(o.userId));
-  const nameTaken = (n: string) => value.some((p) => p.name.toLowerCase() === n.toLowerCase()) || Boolean(excludeNames?.has(n.toLowerCase()));
+  const nameTaken = (n: string) => value.some((p) => normName(p.name) === normName(n)) || Boolean(excludeNames?.has(normName(n)));
 
   function addUser(o: PlayerOption) {
     if (taken(o) || full) return;
@@ -65,14 +66,14 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
     const next = [...value];
     for (const n of names) {
       if (max !== undefined && next.length >= max) break;
-      if (!next.some((p) => p.name.toLowerCase() === n.toLowerCase()) && !excludeNames?.has(n.toLowerCase())) next.push({ kind: "guest", name: n });
+      if (!next.some((p) => normName(p.name) === normName(n)) && !excludeNames?.has(normName(n))) next.push({ kind: "guest", name: n });
     }
     onChange(next);
     setQuery("");
   }
 
   const q = query.trim();
-  const exact = results.find((o) => optionName(o).toLowerCase() === q.toLowerCase());
+  const exact = results.find((o) => normName(optionName(o)) === normName(q));
   function submit() {
     if (!q) return;
     if (exact && !taken(exact)) return addUser(exact);

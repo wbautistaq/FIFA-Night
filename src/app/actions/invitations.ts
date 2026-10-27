@@ -1,0 +1,144 @@
+"use server";
+
+import { cookies } from "next/headers";
+import { z } from "zod";
+import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { errorMessage, fail, guestCookieName, ok, requireActor, type ActionResult } from "@/lib/actor";
+import { participantInputSchema } from "@/lib/schemas";
+
+const uuid = z.string().uuid();
+const token = z.string().regex(/^[a-f0-9]{36}$/, "Link de invitación inválido");
+
+export async function regenerateInvitation(tournamentId: string): Promise<ActionResult<{ token: string }>> {
+  try {
+    const actor = await requireActor(uuid.parse(tournamentId));
+    if (!actor.isOrganizer || !actor.userId) return fail("Solo el organizador puede gestionar invitaciones");
+    // Revoca los links anteriores y crea uno nuevo
+    await actor.client.from("invitations").update({ revoked_at: new Date().toISOString() }).eq("tournament_id", tournamentId).is("revoked_at", null);
+    const { data, error } = await actor.client.from("invitations").insert({ tournament_id: tournamentId, created_by: actor.userId }).select("token").single();
+    if (error) throw error;
+    return ok({ token: data.token as string });
+  } catch (e) {
+    return fail(errorMessage(e));
+  }
+}
+
+export async function revokeInvitations(tournamentId: string): Promise<ActionResult> {
+  try {
+    const actor = await requireActor(uuid.parse(tournamentId));
+    if (!actor.isOrganizer) return fail("Solo el organizador puede revocar invitaciones");
+    const { error } = await actor.client.from("invitations").update({ revoked_at: new Date().toISOString() }).eq("tournament_id", tournamentId).is("revoked_at", null);
+    if (error) throw error;
+    return ok();
+  } catch (e) {
+    return fail(errorMessage(e));
+  }
+}
+
+export interface InvitePreview {
+  tournamentId: string;
+  name: string;
+  format: string;
+  platform: string;
+  startsAt: string;
+  players: number;
+  maxPlayers: number;
+  open: boolean;
+  alreadyIn: boolean;
+}
+
+/** Lectura pública mínima del torneo detrás de un token válido (service role, solo campos no sensibles). */
+export async function previewInvitation(rawToken: string): Promise<ActionResult<InvitePreview>> {
+  try {
+    const t = token.parse(rawToken);
+    const admin = createAdminClient();
+    const { data: inv } = await admin.from("invitations").select("tournament_id,revoked_at,expires_at").eq("token", t).maybeSingle();
+    if (!inv || inv.revoked_at || (inv.expires_at && new Date(inv.expires_at) < new Date())) return fail("Esta invitación no es válida o fue revocada");
+    const { data: tr } = await admin.from("tournaments").select("id,name,format,platform,starts_at,max_players,status").eq("id", inv.tournament_id).single();
+    if (!tr) return fail("Torneo no encontrado");
+    const { count } = await admin.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", tr.id);
+
+    let alreadyIn = false;
+    const store = await cookies();
+    const g = store.get(guestCookieName(tr.id))?.value;
+    if (g) {
+      const { data } = await admin.from("tournament_participants").select("id").eq("tournament_id", tr.id).eq("guest_token", g).maybeSingle();
+      alreadyIn = Boolean(data);
+    }
+    const supabase = await createClient();
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      const { data } = await admin.from("tournament_participants").select("id").eq("tournament_id", tr.id).eq("user_id", u.user.id).maybeSingle();
+      alreadyIn = alreadyIn || Boolean(data);
+    }
+    return ok({
+      tournamentId: tr.id,
+      name: tr.name,
+      format: tr.format,
+      platform: tr.platform,
+      startsAt: tr.starts_at,
+      players: count ?? 0,
+      maxPlayers: tr.max_players,
+      open: tr.status === "registration" && (count ?? 0) < tr.max_players,
+      alreadyIn,
+    });
+  } catch (e) {
+    return fail(e instanceof z.ZodError ? "Link de invitación inválido" : errorMessage(e));
+  }
+}
+
+const COLORS = ["#7c3aed", "#0ea5e9", "#f97316", "#ef4444", "#14b8a6", "#eab308", "#ec4899", "#22c55e", "#6366f1", "#f43f5e"];
+
+export async function joinByToken(rawToken: string, input: unknown): Promise<ActionResult<{ tournamentId: string }>> {
+  try {
+    const t = token.parse(rawToken);
+    const parsed = participantInputSchema.parse(input);
+    const admin = createAdminClient();
+    const { data: inv } = await admin.from("invitations").select("id,tournament_id,revoked_at,expires_at,uses").eq("token", t).maybeSingle();
+    if (!inv || inv.revoked_at || (inv.expires_at && new Date(inv.expires_at) < new Date())) return fail("Esta invitación no es válida o fue revocada");
+
+    const supabase = await createClient();
+    const { data: u } = await supabase.auth.getUser();
+    if (u.user) {
+      const { data: existing } = await admin.from("tournament_participants").select("id").eq("tournament_id", inv.tournament_id).eq("user_id", u.user.id).maybeSingle();
+      if (existing) return ok({ tournamentId: inv.tournament_id });
+    }
+    const { count } = await admin.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", inv.tournament_id);
+    // Con cuenta: se reutiliza el avatar del perfil; invitado: el emoticono elegido al unirse
+    const profileAvatar = u.user ? (await admin.from("profiles").select("avatar_url").eq("id", u.user.id).maybeSingle()).data?.avatar_url : null;
+    const { data: row, error } = await admin
+      .from("tournament_participants")
+      .insert({
+        tournament_id: inv.tournament_id,
+        user_id: u.user?.id ?? null,
+        display_name: parsed.display_name,
+        nickname: parsed.nickname || null,
+        platform: parsed.platform,
+        gamer_id: parsed.gamer_id || null,
+        avatar_url: profileAvatar ?? (parsed.avatar || null),
+        avatar_color: COLORS[(count ?? 0) % COLORS.length],
+      })
+      .select("guest_token")
+      .single();
+    if (error) {
+      if (/participants_name_uniq|duplicate/i.test(error.message)) return fail("Ya hay alguien con ese nombre en el torneo");
+      throw error;
+    }
+    await admin.from("invitations").update({ uses: inv.uses + 1 }).eq("id", inv.id);
+    if (!u.user) {
+      const store = await cookies();
+      store.set(guestCookieName(inv.tournament_id), row.guest_token as string, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 120 });
+    }
+    return ok({ tournamentId: inv.tournament_id });
+  } catch (e) {
+    return fail(e instanceof z.ZodError ? (e.issues[0]?.message ?? "Datos inválidos") : errorMessage(e));
+  }
+}
+
+/** Espectador por link: recibe cookie de solo lectura (sin participante) */
+export async function currentInviteToken(tournamentId: string): Promise<string | null> {
+  const actor = await requireActor(uuid.parse(tournamentId));
+  if (!actor.isOrganizer) return null;
+  const { data } = await actor.client.from("invitations").select("token").eq("tournament_id", tournamentId).is("revoked_at", null).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  return (data?.token as string | undefined) ?? null;
+}

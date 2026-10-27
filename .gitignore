@@ -1,0 +1,14 @@
+node_modules
+.next
+.env*.local
+.env
+playwright-report
+test-results
+*.tsbuildinfo
+next-env.d.ts
+
+# Configuración local de Claude Code (permisos personales)
+.claude/settings.local.json
+# Vercel CLI y build de verificación local
+.vercel
+.next-build

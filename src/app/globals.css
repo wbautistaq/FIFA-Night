@@ -1,0 +1,57 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html { background: #07061a; }
+body {
+  @apply bg-pitch-950 text-white antialiased;
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+  background-image:
+    radial-gradient(900px 520px at 10% -10%, rgba(139,92,246,.28), transparent 60%),
+    radial-gradient(700px 420px at 100% 0%, rgba(244,63,94,.16), transparent 60%),
+    radial-gradient(800px 600px at 50% 110%, rgba(46,230,255,.10), transparent 60%),
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: auto, auto, auto, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+}
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: .01em; text-wrap: balance; }
+button, a, [role="button"] { touch-action: manipulation; }
+:focus-visible { outline: 3px solid #2ee6ff; outline-offset: 2px; border-radius: 10px; }
+.tabular, table { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { * { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+@layer components {
+  /* Tarjeta con borde degradado sutil y brillo superior */
+  .card {
+    @apply relative rounded-2xl border border-white/10 p-4;
+    background:
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,0) 40%),
+      linear-gradient(160deg, rgba(30,26,61,.92), rgba(13,11,36,.92));
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 10px 30px -18px rgba(0,0,0,.9);
+  }
+  .card-glow { @apply card border-volt/40 shadow-glow; }
+  .card-interactive { @apply transition duration-200 hover:border-volt-light/50 hover:shadow-glow active:scale-[.99]; }
+
+  /* Etiqueta de sección estilo HUD */
+  .eyebrow { @apply font-display text-[11px] uppercase tracking-[.18em] text-neon; }
+  .section-title { @apply font-display text-xl uppercase tracking-wide; }
+
+  .btn { @apply inline-flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-xl px-5 text-base font-semibold transition duration-150 active:scale-[.97] disabled:cursor-not-allowed disabled:opacity-45 disabled:active:scale-100; }
+  .btn-primary { @apply btn bg-gradient-to-r from-volt-deep via-volt to-fuchsia-600 text-white shadow-glow hover:brightness-110; }
+  .btn-secondary { @apply btn border border-white/15 bg-white/[.06] text-white hover:border-volt-light/50 hover:bg-white/10; }
+  .btn-danger { @apply btn bg-gradient-to-r from-rose-700 to-blaze text-white hover:brightness-110; }
+  .btn-ghost { @apply btn text-white/80 hover:bg-white/10 hover:text-white; }
+
+  .input { @apply min-h-12 w-full rounded-xl border border-white/15 bg-pitch-900/80 px-4 text-base text-white transition placeholder:text-white/40 focus:border-neon focus:outline-none focus:ring-2 focus:ring-neon/30; }
+  .label { @apply mb-1 block text-sm font-semibold text-white/85; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full border border-white/15 bg-white/[.06] px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/85; }
+  .chip-live { @apply chip border-blaze/50 bg-blaze/15 text-blaze-light; }
+  .help { @apply mt-1 text-xs text-white/65; }
+  .error-text { @apply mt-1 text-sm text-rose-300; }
+
+  /* Esqueleto de carga */
+  .skeleton { @apply rounded-xl bg-[length:200%_100%] animate-shimmer; background-image: linear-gradient(90deg, rgba(255,255,255,.04), rgba(255,255,255,.10), rgba(255,255,255,.04)); }
+}

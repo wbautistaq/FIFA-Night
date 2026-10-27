@@ -1,0 +1,12 @@
+# Solo se sube el código fuente: Vercel instala dependencias y compila en su servidor
+node_modules
+.next
+.next-build
+.env*
+!.env.example
+.claude
+.agents
+playwright-report
+test-results
+tests
+*.tsbuildinfo

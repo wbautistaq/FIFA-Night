@@ -10,6 +10,15 @@ const uuid = z.string().uuid();
 const MAX_PROOF_BYTES = 2 * 1024 * 1024;
 const PROOF_TYPES: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
 
+/** El tipo que declara el navegador se puede falsificar: se comprueba la firma real del archivo. */
+async function looksLikeImage(file: File, type: string): Promise<boolean> {
+  const b = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (type === "image/jpeg") return b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff;
+  if (type === "image/png") return b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47;
+  if (type === "image/webp") return String.fromCharCode(...b.slice(0, 4)) === "RIFF" && String.fromCharCode(...b.slice(8, 12)) === "WEBP";
+  return false;
+}
+
 async function matchContext(matchId: string) {
   const { data } = await createAdminClient().from("matches").select("id,tournament_id,home_id,away_id,status").eq("id", uuid.parse(matchId)).maybeSingle();
   if (!data) throw new Error("Partido no encontrado");
@@ -32,6 +41,7 @@ export async function uploadResultProof(matchId: string, form: FormData): Promis
     const ext = PROOF_TYPES[file.type];
     if (!ext) return fail("La foto debe ser JPG, PNG o WebP");
     if (file.size > MAX_PROOF_BYTES) return fail("La foto pesa más de 2 MB");
+    if (!(await looksLikeImage(file, file.type))) return fail("El archivo no es una imagen válida");
 
     const admin = createAdminClient();
     const path = `proofs/${match.tournament_id}/${match.id}-${Date.now()}.${ext}`;

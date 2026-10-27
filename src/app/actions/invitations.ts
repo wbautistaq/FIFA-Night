@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
-import { errorMessage, fail, guestCookieName, ok, requireActor, type ActionResult } from "@/lib/actor";
+import { errorMessage, fail, guestCookieName, ok, participantForGuestToken, requireActor, type ActionResult } from "@/lib/actor";
 import { participantInputSchema } from "@/lib/schemas";
 
 const uuid = z.string().uuid();
@@ -62,8 +62,7 @@ export async function previewInvitation(rawToken: string): Promise<ActionResult<
     const store = await cookies();
     const g = store.get(guestCookieName(tr.id))?.value;
     if (g) {
-      const { data } = await admin.from("tournament_participants").select("id").eq("tournament_id", tr.id).eq("guest_token", g).maybeSingle();
-      alreadyIn = Boolean(data);
+      alreadyIn = /^[a-f0-9]{48}$/.test(g) && Boolean(await participantForGuestToken(admin, tr.id, g));
     }
     const supabase = await createClient();
     const { data: u } = await supabase.auth.getUser();
@@ -118,7 +117,7 @@ export async function joinByToken(rawToken: string, input: unknown): Promise<Act
         avatar_url: profileAvatar ?? (parsed.avatar || null),
         avatar_color: COLORS[(count ?? 0) % COLORS.length],
       })
-      .select("guest_token")
+      .select("id")
       .single();
     if (error) {
       if (/participants_name_uniq|duplicate/i.test(error.message)) return fail("Ya hay alguien con ese nombre en el torneo");
@@ -126,8 +125,11 @@ export async function joinByToken(rawToken: string, input: unknown): Promise<Act
     }
     await admin.from("invitations").update({ uses: inv.uses + 1 }).eq("id", inv.id);
     if (!u.user) {
+      // El token lo crea un trigger de la base en participant_tokens (tabla solo accesible desde el servidor)
+      const { data: tk, error: te } = await admin.from("participant_tokens").select("token").eq("participant_id", row.id).single();
+      if (te) throw te;
       const store = await cookies();
-      store.set(guestCookieName(inv.tournament_id), row.guest_token as string, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 120 });
+      store.set(guestCookieName(inv.tournament_id), tk.token as string, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", path: "/", maxAge: 60 * 60 * 24 * 120 });
     }
     return ok({ tournamentId: inv.tournament_id });
   } catch (e) {

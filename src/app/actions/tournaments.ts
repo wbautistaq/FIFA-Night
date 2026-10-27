@@ -3,6 +3,7 @@
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { errorMessage, fail, ok, requireActor, requireUser, type ActionResult } from "@/lib/actor";
+import { createAdminClient } from "@/lib/supabase/server";
 import { tournamentInputSchema, participantInputSchema, type TournamentInput } from "@/lib/schemas";
 import { generateFixtures, FixtureError } from "@/lib/engine/fixtures";
 import type { Participant, Tournament } from "@/lib/types";
@@ -152,15 +153,20 @@ export async function replaceParticipant(tournamentId: string, participantId: st
     const parsed = participantInputSchema.parse(input);
     const actor = await requireActor(uuid.parse(tournamentId));
     if (!actor.isOrganizer) return fail("Solo el organizador puede reemplazar participantes");
-    const { error } = await actor.client.from("tournament_participants").update({
+    const { data: updated, error } = await actor.client.from("tournament_participants").update({
       display_name: parsed.display_name,
       nickname: parsed.nickname || null,
       platform: parsed.platform,
       gamer_id: parsed.gamer_id || null,
       user_id: null,
-      guest_token: crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 16),
-    }).eq("id", uuid.parse(participantId)).eq("tournament_id", tournamentId);
+    }).eq("id", uuid.parse(participantId)).eq("tournament_id", tournamentId).select("id");
     if (error) throw error;
+    if (!updated?.length) return fail("Participante no encontrado en este torneo");
+    // Nueva llave de invitado: el link del jugador anterior deja de servir
+    const { error: te } = await createAdminClient().from("participant_tokens")
+      .update({ token: crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 16) })
+      .eq("participant_id", participantId);
+    if (te) throw te;
     return ok();
   } catch (e) {
     return fail(e instanceof z.ZodError ? (e.issues[0]?.message ?? "Datos inválidos") : errorMessage(e));

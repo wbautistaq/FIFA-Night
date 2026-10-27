@@ -57,14 +57,23 @@ export async function getActor(tournamentId: string): Promise<Actor | null> {
   const token = store.get(guestCookieName(tournamentId))?.value;
   if (!token || !/^[a-f0-9]{48}$/.test(token)) return null;
   const admin = createAdminClient();
-  const { data: gp } = await admin
-    .from("tournament_participants")
-    .select("id")
-    .eq("tournament_id", tournamentId)
-    .eq("guest_token", token)
+  const participantId = await participantForGuestToken(admin, tournamentId, token);
+  if (!participantId) return null;
+  return { client: admin, kind: "guest", userId: null, participantId, isOrganizer: false };
+}
+
+/**
+ * Participante invitado dueño de un token, solo si pertenece a ese torneo.
+ * Los tokens viven en `participant_tokens`, sin permisos para usuarios: únicamente el servidor los lee.
+ */
+export async function participantForGuestToken(admin: SupabaseClient, tournamentId: string, token: string): Promise<string | null> {
+  const { data } = await admin
+    .from("participant_tokens")
+    .select("participant_id, tournament_participants!inner(tournament_id)")
+    .eq("token", token)
+    .eq("tournament_participants.tournament_id", tournamentId)
     .maybeSingle();
-  if (!gp) return null;
-  return { client: admin, kind: "guest", userId: null, participantId: gp.id, isOrganizer: false };
+  return (data?.participant_id as string | undefined) ?? null;
 }
 
 export async function requireActor(tournamentId: string): Promise<Actor> {

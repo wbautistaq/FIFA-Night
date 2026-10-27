@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/browser";
 import { Field } from "@/components/ui/primitives";
+import { safeInternalPath } from "@/lib/redirect";
 import { Eye, EyeSlash, Trophy } from "@phosphor-icons/react";
 
 const emailSchema = z.string().trim().email("Escribe un correo válido");
@@ -27,7 +28,7 @@ function LoginForm() {
   const validation = emailSchema.safeParse(email);
   const emailError = touched && !validation.success ? validation.error.issues[0]?.message : undefined;
   const redirectTo = () => `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}`;
-  const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "/";
+  const safeNext = safeInternalPath(next);
 
   async function magicLink(e: FormEvent) {
     e.preventDefault();

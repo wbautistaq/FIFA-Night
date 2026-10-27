@@ -13,7 +13,8 @@
     "format": "prettier --write .",
     "db:test": "bash supabase/tests/run.sh",
     "seed:teams": "node scripts/build-teams.mjs",
-    "acceso": "node --env-file=.env.local scripts/access-code.mjs"
+    "acceso": "node --env-file=.env.local scripts/access-code.mjs",
+    "admin": "node --env-file=.env.local scripts/make-admin.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "2.1.10",

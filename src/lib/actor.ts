@@ -12,6 +12,8 @@ export interface Actor {
   userId: string | null;
   participantId: string | null;
   isOrganizer: boolean;
+  /** Invitado que además tiene sesión iniciada: puede vincular ese perfil a su cuenta. */
+  canClaim?: boolean;
 }
 
 export type ActionResult<T = undefined> = { ok: true; data?: T } | { ok: false; error: string };
@@ -59,7 +61,7 @@ export async function getActor(tournamentId: string): Promise<Actor | null> {
   const admin = createAdminClient();
   const participantId = await participantForGuestToken(admin, tournamentId, token);
   if (!participantId) return null;
-  return { client: admin, kind: "guest", userId: null, participantId, isOrganizer: false };
+  return { client: admin, kind: "guest", userId: null, participantId, isOrganizer: false, canClaim: Boolean(userId) };
 }
 
 /**

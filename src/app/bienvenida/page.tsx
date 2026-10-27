@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { updateProfile } from "@/app/actions/social";
+import { checkNickname } from "@/app/actions/players";
 import { Field } from "@/components/ui/primitives";
-import { profileInputSchema } from "@/lib/schemas";
+import { nicknameSchema, profileInputSchema } from "@/lib/schemas";
 
 const PLATFORMS = [
   ["presencial", "Presencial"],
@@ -18,7 +19,21 @@ export default function Onboarding() {
   const [step, setStep] = useState(1);
   const [form, setForm] = useState({ display_name: "", nickname: "", platform: "presencial" as (typeof PLATFORMS)[number][0], gamer_id: "" });
   const [error, setError] = useState("");
+  const [nickState, setNickState] = useState<{ value: string; ok: boolean; message: string } | null>(null);
   const nameOk = profileInputSchema.shape.display_name.safeParse(form.display_name).success;
+  const nickFormat = nicknameSchema.safeParse(form.nickname);
+  const nickOk = nickFormat.success && nickState?.value === form.nickname.trim() && nickState.ok;
+
+  // Comprueba que el apodo esté libre mientras se escribe (con una pequeña espera)
+  useEffect(() => {
+    const n = form.nickname.trim();
+    if (!nicknameSchema.safeParse(n).success) return;
+    const t = setTimeout(async () => {
+      const r = await checkNickname(n);
+      setNickState({ value: n, ok: r.ok && Boolean(r.data?.available), message: r.ok ? (r.data?.available ? "Disponible" : "Ese apodo ya lo usa otra persona") : r.error });
+    }, 350);
+    return () => clearTimeout(t);
+  }, [form.nickname]);
 
   async function finish() {
     const res = await updateProfile(form);
@@ -41,10 +56,11 @@ export default function Onboarding() {
             <Field label="Tu nombre" htmlFor="name" error={form.display_name && !nameOk ? "Escribe tu nombre" : undefined}>
               <input id="name" className="input" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} autoComplete="name" />
             </Field>
-            <Field label="Apodo (opcional)" htmlFor="nick" help="Aparecerá en tablas y brackets">
-              <input id="nick" className="input" value={form.nickname} onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
+            <Field label="Apodo" htmlFor="nick" help={nickOk ? "Disponible ✓ Así te encuentran tus amigos para agregarte a sus torneos" : "Único en FIFA Night: así te encuentran tus amigos para agregarte a sus torneos"}
+              error={form.nickname && !nickFormat.success ? nickFormat.error.issues[0]?.message : nickState && nickState.value === form.nickname.trim() && !nickState.ok ? nickState.message : undefined}>
+              <input id="nick" className="input" value={form.nickname} maxLength={20} autoCapitalize="off" onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
             </Field>
-            <button className="btn-primary w-full" disabled={!nameOk} onClick={() => setStep(2)}>Siguiente</button>
+            <button className="btn-primary w-full" disabled={!nameOk || !nickOk} onClick={() => setStep(2)}>Siguiente</button>
           </>
         )}
         {step === 2 && (

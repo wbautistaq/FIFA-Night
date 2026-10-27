@@ -19,7 +19,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
     const { data } = actor.kind === "user" && actor.userId ? await q.eq("user_id", actor.userId) : actor.participantId ? await q.eq("participant_id", actor.participantId) : { data: [] };
     notifications = data ?? [];
 
-    const viewer: Viewer = { kind: actor.kind, userId: actor.userId, participantId: actor.participantId, isOrganizer: actor.isOrganizer };
+    const viewer: Viewer = { kind: actor.kind, userId: actor.userId, participantId: actor.participantId, isOrganizer: actor.isOrganizer, canClaim: actor.canClaim };
     return NextResponse.json({ snapshot, viewer, notifications }, { headers: { "Cache-Control": "no-store" } });
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : "Error cargando el torneo" }, { status: 500 });

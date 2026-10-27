@@ -91,8 +91,11 @@ export async function updateProfile(input: unknown): Promise<ActionResult> {
   try {
     const p = profileInputSchema.parse(input);
     const { supabase, user } = await requireUser();
-    const { error } = await supabase.from("profiles").update({ display_name: p.display_name, nickname: p.nickname || null, platform: p.platform, gamer_id: p.gamer_id || null }).eq("id", user.id);
-    if (error) throw error;
+    const { error } = await supabase.from("profiles").update({ display_name: p.display_name, nickname: p.nickname, platform: p.platform, gamer_id: p.gamer_id || null }).eq("id", user.id);
+    if (error) {
+      if (/profiles_nickname_uniq|duplicate key/i.test(error.message)) return fail("Ese apodo ya lo usa otra persona. Prueba con otro.");
+      throw error;
+    }
     return ok();
   } catch (e) {
     return fail(e instanceof z.ZodError ? (e.issues[0]?.message ?? "Datos inválidos") : errorMessage(e));

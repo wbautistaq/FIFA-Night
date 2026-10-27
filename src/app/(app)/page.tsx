@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { TournamentCard } from "@/components/TournamentCard";
@@ -13,10 +12,10 @@ export default async function Home() {
   const supabase = await createClient();
   const { data: auth } = await supabase.auth.getUser();
   if (!auth.user) redirect("/login");
-  const store = await cookies();
 
   const { data: profile } = await supabase.from("profiles").select("display_name,nickname").eq("id", auth.user.id).maybeSingle();
-  if (!profile?.nickname && !store.get("fn_onboarded")) redirect("/bienvenida");
+  // El apodo es obligatorio: es como los amigos te encuentran para agregarte a sus torneos
+  if (!profile?.nickname) redirect("/bienvenida");
 
   const { data } = await supabase
     .from("tournaments")

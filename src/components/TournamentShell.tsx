@@ -8,6 +8,7 @@ import { Bell, CalendarBlank, CaretLeft, ChartBar, House, ListNumbers, SquaresFo
 import { ErrorState } from "@/components/ui/primitives";
 import { TurnAlert } from "@/components/TurnAlert";
 import { CancelledTournament } from "@/components/CancelledTournament";
+import { ClaimGuestBanner } from "@/components/ClaimGuestBanner";
 import { STATUS_LABEL } from "@/lib/labels";
 
 type Ctx = ReturnType<typeof useTournament> & { snapshot: NonNullable<ReturnType<typeof useTournament>["snapshot"]>; viewer: NonNullable<ReturnType<typeof useTournament>["viewer"]>; derived: NonNullable<ReturnType<typeof useTournament>["derived"]>; id: string };
@@ -88,6 +89,9 @@ export function TournamentShell({ id, children }: { id: string; children: ReactN
             {unread > 0 ? <span className="absolute -right-1.5 -top-1.5 min-w-5 rounded-full bg-blaze px-1.5 text-center text-xs font-bold leading-5 text-white shadow-[0_0_12px_rgba(244,63,94,.7)]">{unread}</span> : null}
           </Link>
         </header>
+        {ctx.viewer.canClaim && ctx.viewer.participantId ? (
+          <ClaimGuestBanner tournamentId={id} name={ctx.derived.participants.get(ctx.viewer.participantId)?.display_name ?? "invitado"} onDone={ctx.refresh} />
+        ) : null}
         <main id="main">{children}</main>
         <TurnAlert tournamentId={id} participantId={ctx.viewer.participantId} matches={ctx.snapshot.matches} participants={ctx.derived.participants} teamOf={ctx.derived.teamOf} />
         <nav aria-label="Secciones del torneo" className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),.75rem)]">

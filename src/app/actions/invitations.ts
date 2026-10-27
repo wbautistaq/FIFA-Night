@@ -45,6 +45,10 @@ export interface InvitePreview {
   maxPlayers: number;
   open: boolean;
   alreadyIn: boolean;
+  /** Solo se puede entrar con cuenta. */
+  accountsOnly: boolean;
+  /** Quien abre el link con sesión iniciada: entra con su apodo. */
+  me: { name: string; avatarUrl: string | null } | null;
 }
 
 /** Lectura pública mínima del torneo detrás de un token válido (service role, solo campos no sensibles). */
@@ -54,7 +58,7 @@ export async function previewInvitation(rawToken: string): Promise<ActionResult<
     const admin = createAdminClient();
     const { data: inv } = await admin.from("invitations").select("tournament_id,revoked_at,expires_at").eq("token", t).maybeSingle();
     if (!inv || inv.revoked_at || (inv.expires_at && new Date(inv.expires_at) < new Date())) return fail("Esta invitación no es válida o fue revocada");
-    const { data: tr } = await admin.from("tournaments").select("id,name,format,platform,starts_at,max_players,status").eq("id", inv.tournament_id).single();
+    const { data: tr } = await admin.from("tournaments").select("id,name,format,platform,starts_at,max_players,status,settings").eq("id", inv.tournament_id).single();
     if (!tr) return fail("Torneo no encontrado");
     const { count } = await admin.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", tr.id);
 
@@ -66,9 +70,14 @@ export async function previewInvitation(rawToken: string): Promise<ActionResult<
     }
     const supabase = await createClient();
     const { data: u } = await supabase.auth.getUser();
+    let me: InvitePreview["me"] = null;
     if (u.user) {
-      const { data } = await admin.from("tournament_participants").select("id").eq("tournament_id", tr.id).eq("user_id", u.user.id).maybeSingle();
+      const [{ data }, { data: prof }] = await Promise.all([
+        admin.from("tournament_participants").select("id").eq("tournament_id", tr.id).eq("user_id", u.user.id).maybeSingle(),
+        admin.from("profiles").select("nickname,display_name,avatar_url").eq("id", u.user.id).maybeSingle(),
+      ]);
       alreadyIn = alreadyIn || Boolean(data);
+      me = { name: (prof?.nickname as string | null) || (prof?.display_name as string | undefined) || "Jugador", avatarUrl: (prof?.avatar_url as string | null) ?? null };
     }
     return ok({
       tournamentId: tr.id,
@@ -80,6 +89,8 @@ export async function previewInvitation(rawToken: string): Promise<ActionResult<
       maxPlayers: tr.max_players,
       open: tr.status === "registration" && (count ?? 0) < tr.max_players,
       alreadyIn,
+      me,
+      accountsOnly: Boolean((tr.settings as { accounts_only?: boolean } | null)?.accounts_only),
     });
   } catch (e) {
     return fail(e instanceof z.ZodError ? "Link de invitación inválido" : errorMessage(e));
@@ -101,17 +112,23 @@ export async function joinByToken(rawToken: string, input: unknown): Promise<Act
     if (u.user) {
       const { data: existing } = await admin.from("tournament_participants").select("id").eq("tournament_id", inv.tournament_id).eq("user_id", u.user.id).maybeSingle();
       if (existing) return ok({ tournamentId: inv.tournament_id });
+    } else {
+      const { data: tr } = await admin.from("tournaments").select("settings").eq("id", inv.tournament_id).single();
+      if ((tr?.settings as { accounts_only?: boolean } | null)?.accounts_only) return fail("Este torneo es solo para jugadores con cuenta. Inicia sesión para unirte.");
     }
     const { count } = await admin.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", inv.tournament_id);
     // Con cuenta: se reutiliza el avatar del perfil; invitado: el emoticono elegido al unirse
-    const profileAvatar = u.user ? (await admin.from("profiles").select("avatar_url").eq("id", u.user.id).maybeSingle()).data?.avatar_url : null;
+    const prof = u.user ? (await admin.from("profiles").select("avatar_url,nickname,display_name").eq("id", u.user.id).maybeSingle()).data : null;
+    const profileAvatar = prof?.avatar_url as string | null | undefined;
+    const profileNick = (prof?.nickname as string | null | undefined) ?? null;
+    const profileName = profileNick || (prof?.display_name as string | undefined);
     const { data: row, error } = await admin
       .from("tournament_participants")
       .insert({
         tournament_id: inv.tournament_id,
         user_id: u.user?.id ?? null,
-        display_name: parsed.display_name,
-        nickname: parsed.nickname || null,
+        display_name: u.user ? (profileName ?? parsed.display_name) : parsed.display_name,
+        nickname: u.user ? profileNick : parsed.nickname || null,
         platform: parsed.platform,
         gamer_id: parsed.gamer_id || null,
         avatar_url: profileAvatar ?? (parsed.avatar || null),

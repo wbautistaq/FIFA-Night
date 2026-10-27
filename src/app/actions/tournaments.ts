@@ -121,6 +121,8 @@ export async function addParticipant(tournamentId: string, input: unknown): Prom
     const parsed = participantInputSchema.parse(input);
     const actor = await requireActor(uuid.parse(tournamentId));
     if (!actor.isOrganizer) return fail("Solo el organizador puede agregar participantes");
+    const { data: tr } = await actor.client.from("tournaments").select("settings").eq("id", tournamentId).single();
+    if ((tr?.settings as { accounts_only?: boolean } | null)?.accounts_only) return fail("Este torneo es solo para jugadores con cuenta: búscalos por su apodo");
     const { count } = await actor.client.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", tournamentId);
     const { error } = await actor.client.from("tournament_participants").insert({
       tournament_id: tournamentId,
@@ -273,7 +275,10 @@ export async function setTournamentStatus(tournamentId: string, status: "draft" 
 
 const quickSchema = z.object({
   name: z.string().trim().max(80).optional().or(z.literal("")),
-  players: z.array(z.string().trim().min(1).max(40)).min(1, "Agrega al menos un jugador").max(31),
+  /** Invitados sin cuenta (nombres). */
+  players: z.array(z.string().trim().min(1).max(40)).max(31).default([]),
+  /** Jugadores con cuenta elegidos por apodo. */
+  members: z.array(z.string().uuid()).max(31).default([]),
   includeMe: z.boolean(),
   format: z.enum(["league", "league_double", "cup", "swiss", "groups_playoffs"]),
   /** Solo para grupos: lo que sugiere el asistente de formato para esta cantidad de jugadores. */
@@ -325,11 +330,12 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
   let createdId: string | null = null;
   try {
     const q = quickSchema.parse(input);
+    const { supabase, user } = await requireUser();
     const names = [...new Map(q.players.map((n) => [n.toLowerCase(), n])).values()];
-    const total = names.length + (q.includeMe ? 1 : 0);
+    const members = [...new Set(q.members)].filter((m) => m !== user.id);
+    const total = names.length + members.length + (q.includeMe ? 1 : 0);
     if (total < 4) return fail("Se necesitan al menos 4 jugadores (contándote a ti si juegas)");
     if (total > 32) return fail("Máximo 32 jugadores");
-    const { supabase, user } = await requireUser();
 
     const created = await createTournament({
       name: q.name || `Noche FIFA ${new Date().toLocaleDateString("es", { day: "numeric", month: "short" })}`,
@@ -350,15 +356,22 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
       const { error } = await supabase.from("tournament_participants").delete().eq("tournament_id", id).eq("user_id", user.id);
       if (error) throw error;
     }
-    const { error: pe } = await supabase.from("tournament_participants").insert(
-      names.map((display_name, i) => ({
-        tournament_id: id,
-        display_name,
-        avatar_color: COLORS[(i + 1) % COLORS.length],
-        avatar_url: emojiAvatar(GAMER_AVATARS[Math.floor(secureRng() * GAMER_AVATARS.length)]!.emoji),
-      })),
-    );
-    if (pe) throw pe;
+    // Primero los que tienen cuenta (entran con su perfil y reciben aviso); luego los invitados
+    if (members.length) {
+      const { error: me } = await supabase.rpc("add_players", { p_tournament: id, p_users: members });
+      if (me) throw me;
+    }
+    if (names.length) {
+      const { error: pe } = await supabase.from("tournament_participants").insert(
+        names.map((display_name, i) => ({
+          tournament_id: id,
+          display_name,
+          avatar_color: COLORS[(i + members.length + 1) % COLORS.length],
+          avatar_url: emojiAvatar(GAMER_AVATARS[Math.floor(secureRng() * GAMER_AVATARS.length)]!.emoji),
+        })),
+      );
+      if (pe) throw new Error(/participants_name_uniq|duplicate/i.test(pe.message) ? "Hay un invitado con el mismo nombre que un jugador con cuenta" : pe.message);
+    }
 
     const [{ data: teams, error: te }, { data: ps, error: pse }] = await Promise.all([
       supabase.from("fifa_teams").select("id,name,league,country,rating,kind,banned,favorite").is("tournament_id", null),

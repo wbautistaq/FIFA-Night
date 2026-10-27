@@ -4,10 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
-import { CaretLeft, Lightning, Plus, X } from "@phosphor-icons/react";
+import { CaretLeft, Lightning } from "@phosphor-icons/react";
 import { quickTournament, type QuickTournamentInput } from "@/app/actions/tournaments";
 import { Field, Spinner, Toggle } from "@/components/ui/primitives";
 import { TeamPoolPreview } from "@/components/TeamPoolPreview";
+import { PlayerPicker, type PickedPlayer } from "@/components/PlayerPicker";
 import { FormatAdvicePanel } from "@/components/FormatAdvicePanel";
 import { formatAdvice } from "@/lib/engine/advice";
 import type { TournamentFormat } from "@/lib/engine/types";
@@ -27,8 +28,7 @@ const TEAMS: { value: QuickTournamentInput["teams"]; label: string }[] = [
 export default function QuickTournamentPage() {
   const router = useRouter();
   const [name, setName] = useState("");
-  const [draft, setDraft] = useState("");
-  const [players, setPlayers] = useState<string[]>([]);
+  const [players, setPlayers] = useState<PickedPlayer[]>([]);
   const [includeMe, setIncludeMe] = useState(true);
   // null = seguir la recomendación del asistente mientras cambia la cantidad de jugadores
   const [picked, setPicked] = useState<string | null>(null);
@@ -41,6 +41,7 @@ export default function QuickTournamentPage() {
   const [bank, setBank] = useState<Team[] | null>(null);
 
   const total = players.length + (includeMe ? 1 : 0);
+  const guests = players.filter((p) => p.kind === "guest").length;
   const advice = useMemo(() => formatAdvice(total, { formats: QUICK_FORMATS }), [total]);
   const option = advice.options.find((o) => o.id === picked) ?? advice.options.find((o) => o.recommended) ?? advice.options[0];
 
@@ -51,22 +52,14 @@ export default function QuickTournamentPage() {
   const preview = useMemo(() => (bank ?? []).filter((t) =>
     !t.banned && (teams === "all" || (teams === "clubs" ? t.kind === "club" : t.kind === "national")) && teamStars(t) >= minStars), [bank, teams, minStars]);
 
-  // Acepta varios nombres a la vez separados por comas o saltos de línea
-  function add() {
-    const names = draft.split(/[,\n]/).map((n) => n.trim()).filter(Boolean);
-    if (!names.length) return;
-    setPlayers((prev) => {
-      const seen = new Set(prev.map((p) => p.toLowerCase()));
-      return [...prev, ...names.filter((n) => !seen.has(n.toLowerCase()) && seen.add(n.toLowerCase()))].slice(0, 31);
-    });
-    setDraft("");
-  }
-
   async function go() {
     setBusy(true);
     setError("");
     const format = (option?.format ?? "league") as QuickTournamentInput["format"];
-    const r = await quickTournament({ name, players, includeMe, format, groupSize: option?.settings.group_size, qualifiers: option?.settings.qualifiers_per_group, teams, minStars, balanced });
+    const r = await quickTournament({
+      name, includeMe, format,
+      players: players.flatMap((p) => (p.kind === "guest" ? [p.name] : [])),
+      members: players.flatMap((p) => (p.kind === "user" ? [p.userId] : [])), groupSize: option?.settings.group_size, qualifiers: option?.settings.qualifiers_per_group, teams, minStars, balanced });
     if (!r.ok || !r.data) {
       setBusy(false);
       return setError(r.ok ? "No se pudo crear el torneo" : r.error);
@@ -81,28 +74,14 @@ export default function QuickTournamentPage() {
       <header>
         <p className="eyebrow flex items-center gap-1"><Lightning size={14} weight="fill" aria-hidden />En 30 segundos</p>
         <h1 className="text-3xl uppercase">Torneo relámpago</h1>
-        <p className="mt-1 text-sm text-white/70">Escribe quién juega y listo: sorteamos equipos de FC 27, armamos el calendario y arranca. Nadie necesita cuenta.</p>
+        <p className="mt-1 text-sm text-white/70">Elige quién juega y listo: sorteamos equipos de FC 27, armamos el calendario y arranca. Busca a tus amigos por su apodo; quien no tenga cuenta entra como invitado.</p>
       </header>
 
       <section className="card space-y-3" aria-labelledby="qp">
         <h2 id="qp" className="text-lg uppercase">Jugadores <span className="font-sans text-sm normal-case text-white/60">({total})</span></h2>
         <Toggle id="q-me" label="Yo también juego" checked={includeMe} onChange={setIncludeMe} />
-        <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); add(); }}>
-          <label htmlFor="q-add" className="sr-only">Nombre del jugador</label>
-          <input id="q-add" className="input" placeholder="Ana, Beto, Carla…" value={draft} onChange={(e) => setDraft(e.target.value)} autoComplete="off" />
-          <button className="btn-secondary !min-h-12 !w-12 !px-0" aria-label="Agregar jugador" disabled={!draft.trim()}><Plus size={22} weight="bold" aria-hidden /></button>
-        </form>
-        <p className="help">Puedes pegar varios nombres separados por comas.</p>
-        {players.length > 0 && (
-          <ul className="flex flex-wrap gap-2" aria-label="Jugadores agregados">
-            {players.map((p) => (
-              <li key={p} className="inline-flex min-h-10 items-center gap-1 rounded-full border border-white/15 bg-white/[.06] pl-3 pr-1 text-sm font-semibold">
-                {p}
-                <button type="button" className="grid h-8 w-8 place-items-center rounded-full text-white/60 hover:bg-white/10 hover:text-white" aria-label={`Quitar a ${p}`} onClick={() => setPlayers(players.filter((x) => x !== p))}><X size={14} weight="bold" aria-hidden /></button>
-              </li>
-            ))}
-          </ul>
-        )}
+        <PlayerPicker value={players} onChange={setPlayers} max={includeMe ? 31 : 32} />
+        {guests > 0 ? <p className="help">{guests === 1 ? "1 invitado" : `${guests} invitados`}: sus partidos no quedan en un perfil propio hasta que creen su cuenta y lo vinculen.</p> : null}
       </section>
 
       <section className="card space-y-4" aria-labelledby="qc">

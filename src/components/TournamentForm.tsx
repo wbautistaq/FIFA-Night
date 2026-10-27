@@ -107,6 +107,7 @@ export function TournamentForm({ initial, submitLabel, onSubmit, lockFormat }: {
         <Toggle id="pred" label="Predicciones" checked={v.settings.predictions} onChange={(x) => setS({ predictions: x })} help="Los espectadores suman puntos por acertar" />
         {v.settings.predictions && <Toggle id="exact" label="Puntos extra por marcador exacto" checked={v.settings.exact_score_predictions} onChange={(x) => setS({ exact_score_predictions: x })} />}
         <Toggle id="wall" label="Muro del torneo" checked={v.settings.wall} onChange={(x) => setS({ wall: x })} />
+        <Toggle id="acc" label="Solo jugadores con cuenta" checked={Boolean(v.settings.accounts_only)} onChange={(x) => setS({ accounts_only: x })} help="Sin invitados: todos los partidos quedan en el perfil de cada jugador" />
       </div>
 
       <Field label="Reglas" htmlFor="rules" help="Duración de partidos, dificultad, equipos permitidos…">

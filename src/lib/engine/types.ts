@@ -32,6 +32,8 @@ export interface TournamentSettings {
   predictions: boolean;
   exact_score_predictions: boolean;
   wall: boolean;
+  /** Solo jugadores con cuenta: sin invitados (todo cuenta para el ranking). */
+  accounts_only?: boolean;
   /** Rondas del sistema suizo (por defecto 3). */
   swiss_rounds?: number;
 }

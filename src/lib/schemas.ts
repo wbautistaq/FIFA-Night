@@ -15,6 +15,7 @@ export const settingsSchema = z.object({
   predictions: z.boolean(),
   exact_score_predictions: z.boolean(),
   wall: z.boolean(),
+  accounts_only: z.boolean().optional(),
   swiss_rounds: z.number().int().min(2).max(10).optional(),
 });
 
@@ -38,9 +39,15 @@ export const participantInputSchema = z.object({
 });
 export type ParticipantInput = z.infer<typeof participantInputSchema>;
 
+/** Apodo de cuenta: único en la plataforma, es como te encuentran tus amigos para agregarte. */
+export const nicknameSchema = z.string().trim()
+  .min(3, "El apodo debe tener al menos 3 caracteres")
+  .max(20, "Máximo 20 caracteres")
+  .regex(/^[\p{L}\p{N}][\p{L}\p{N} ._-]*$/u, "Usa letras, números, espacios, punto, guion o guion bajo");
+
 export const profileInputSchema = z.object({
   display_name: z.string().trim().min(1, "Escribe tu nombre").max(40),
-  nickname: z.string().trim().max(30).optional().or(z.literal("")),
+  nickname: nicknameSchema,
   platform: platformSchema,
   gamer_id: z.string().trim().max(40).optional().or(z.literal("")),
 });

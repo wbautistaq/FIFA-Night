@@ -1,7 +1,7 @@
 "use client";
 
 import { shareOrigin } from "@/lib/site";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import QRCode from "qrcode";
 import { useT } from "@/components/TournamentShell";
@@ -9,6 +9,8 @@ import { PlayerChip } from "@/components/MatchRow";
 import { ActionButton, EmptyState, Field, RemoteImage, Spinner, useToast } from "@/components/ui/primitives";
 import { currentInviteToken, regenerateInvitation, revokeInvitations } from "@/app/actions/invitations";
 import { addParticipant, removeParticipant, replaceParticipant } from "@/app/actions/tournaments";
+import { addPlayers } from "@/app/actions/players";
+import { PlayerPicker, type PickedPlayer } from "@/components/PlayerPicker";
 import { participantInputSchema } from "@/lib/schemas";
 import { LockSimple, UsersThree } from "@phosphor-icons/react";
 
@@ -31,6 +33,26 @@ export default function Invite() {
   }, [link]);
 
   const nameCheck = participantInputSchema.safeParse(form);
+  const accountsOnly = Boolean(t.settings.accounts_only);
+  const [toAdd, setToAdd] = useState<PickedPlayer[]>([]);
+  const inTournamentUsers = useMemo(() => new Set(participants.flatMap((p) => (p.user_id ? [p.user_id] : []))), [participants]);
+  const inTournamentNames = useMemo(() => new Set(participants.map((p) => p.display_name.toLowerCase())), [participants]);
+
+  async function addSelected() {
+    const users = toAdd.flatMap((p) => (p.kind === "user" ? [p.userId] : []));
+    const guests = toAdd.flatMap((p) => (p.kind === "guest" ? [p.name] : []));
+    if (users.length) {
+      const r = await addPlayers(id, users);
+      if (!r.ok) return toast.show("error", r.error);
+    }
+    for (const name of guests) {
+      const r = await addParticipant(id, { display_name: name, platform: "presencial" });
+      if (!r.ok) return toast.show("error", `${name}: ${r.error}`);
+    }
+    toast.show("success", toAdd.length === 1 ? "Jugador agregado" : `${toAdd.length} jugadores agregados`);
+    setToAdd([]);
+    await refresh();
+  }
   const message = `¡Te invito a "${t.name}" en FIFA Night! Únete aquí: ${link}`;
 
   async function copy() {
@@ -83,6 +105,19 @@ export default function Invite() {
         )}
       </section>
 
+      {editable && participants.length < t.max_players && (
+        <section className="card space-y-4" aria-labelledby="add-h">
+          <h3 id="add-h" className="font-bold">Agregar jugadores</h3>
+          <PlayerPicker value={toAdd} onChange={setToAdd} allowGuests={!accountsOnly} max={t.max_players - participants.length}
+            excludeUserIds={inTournamentUsers} excludeNames={inTournamentNames} />
+          {toAdd.length > 0 && (
+            <ActionButton className="btn-primary w-full" onAction={addSelected}>
+              Agregar {toAdd.length === 1 ? "1 jugador" : `${toAdd.length} jugadores`}
+            </ActionButton>
+          )}
+        </section>
+      )}
+
       <section className="space-y-3" aria-labelledby="players-h">
         <h3 id="players-h" className="font-bold">Participantes ({participants.length}/{t.max_players})</h3>
         {participants.length === 0 ? <EmptyState icon={UsersThree} title="Todavía no se ha unido nadie" /> : (
@@ -102,9 +137,9 @@ export default function Invite() {
         )}
       </section>
 
-      {editable && (
+      {editable && replacing && (
         <form onSubmit={submitParticipant} className="card space-y-3" noValidate>
-          <h3 className="font-bold">{replacing ? "Reemplazar participante" : "Agregar manualmente"}</h3>
+          <h3 className="font-bold">Reemplazar participante</h3>
           <Field label="Nombre" htmlFor="pname" error={form.display_name && !nameCheck.success ? nameCheck.error.issues[0]?.message : undefined}>
             <input id="pname" className="input" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} />
           </Field>

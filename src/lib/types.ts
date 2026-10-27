@@ -226,4 +226,6 @@ export interface Viewer {
   participantId: string | null;
   isOrganizer: boolean;
   guestToken?: string;
+  /** Jugó como invitado y ahora tiene sesión: puede pasar ese perfil a su cuenta. */
+  canClaim?: boolean;
 }

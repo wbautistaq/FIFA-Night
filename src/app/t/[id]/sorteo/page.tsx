@@ -93,7 +93,7 @@ export default function Draw() {
   return (
     <div className="space-y-6">
       <div>
-        <p className="eyebrow">EA SPORTS FC 26</p>
+        <p className="eyebrow">EA SPORTS FC 27</p>
         <h2 className="section-title">Sorteo de equipos</h2>
       </div>
 

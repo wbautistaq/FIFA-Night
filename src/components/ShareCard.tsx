@@ -69,7 +69,7 @@ function Frame({ eyebrow, children }: { eyebrow: string; children: ReactNode }) 
   return (
     <div className="relative flex h-[450px] w-[360px] flex-col overflow-hidden bg-pitch-950 p-6 font-sans text-white"
       style={{ backgroundImage: "radial-gradient(400px 260px at 0% 0%, rgba(139,92,246,.55), transparent 70%), radial-gradient(380px 260px at 100% 100%, rgba(244,63,94,.35), transparent 70%), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px)", backgroundSize: "auto, auto, 24px 24px, 24px 24px" }}>
-      <p className="font-display text-[11px] uppercase tracking-[.25em] text-neon">FIFA Night · FC 26</p>
+      <p className="font-display text-[11px] uppercase tracking-[.25em] text-neon">FIFA Night · FC 27</p>
       <p className="mt-1 truncate font-display text-lg uppercase leading-tight">{snapshot.tournament.name}</p>
       <p className="mt-4 font-display text-xs uppercase tracking-[.2em] text-white/60">{eyebrow}</p>
       <div className="flex flex-1 flex-col justify-center">{children}</div>

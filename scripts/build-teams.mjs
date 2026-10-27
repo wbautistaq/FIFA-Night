@@ -1,5 +1,6 @@
 // Genera data/teams.json y el seed SQL de equipos: clubes de las 5 grandes ligas y selecciones de EA SPORTS FC 26.
-// Estrellas de clubes según la lista pública de valoraciones de FC 26 (fifagamenews.com/fc-26-team-star-ratings).
+// Estrellas de clubes según la lista pública de valoraciones de FC 26 (fifagamenews.com/fc-26-team-star-ratings),
+// corregidas con la revelación oficial de FC 27 (agosto 2026): 8 clubes de 5★ y 8 de 4.5★ (ver migración 14).
 // Las selecciones no tienen fuente pública fiable: sus estrellas son una estimación y conviene revisarlas.
 // Sin escudos oficiales: la app dibuja un escudo propio con los colores de cada equipo.
 import { writeFileSync } from "node:fs";
@@ -31,7 +32,7 @@ const leagues = {
   "LaLiga|España": [
     ["Real Madrid", "RMA", 5, "#FFFFFF", "#FEBE10"],
     ["FC Barcelona", "BAR", 5, "#A50044", "#004D98"],
-    ["Atlético de Madrid", "ATM", 4.5, "#CB3524", "#272E61"],
+    ["Atlético de Madrid", "ATM", 5, "#CB3524", "#272E61"],
     ["Athletic Club", "ATH", 4.5, "#EE2523", "#FFFFFF"],
     ["Real Betis", "BET", 4, "#00954C", "#FFFFFF"],
     ["Real Sociedad", "RSO", 4, "#0067B1", "#FFFFFF"],
@@ -51,7 +52,7 @@ const leagues = {
     ["Elche", "ELC", 3, "#FFFFFF", "#05642C"],
   ],
   "Serie A|Italia": [
-    ["Inter", "INT", 5, "#010E80", "#000000"],
+    ["Inter", "INT", 4.5, "#010E80", "#000000"],
     ["Napoli", "NAP", 4.5, "#12A0D7", "#FFFFFF"],
     ["Juventus", "JUV", 4.5, "#FFFFFF", "#000000"],
     ["AC Milan", "MIL", 4.5, "#FB090B", "#000000"],

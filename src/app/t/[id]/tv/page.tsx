@@ -47,7 +47,7 @@ export default function TvMode() {
   return (
     <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-pitch-950 bg-[radial-gradient(1200px_600px_at_15%_-10%,rgba(139,92,246,.35),transparent_60%),radial-gradient(900px_500px_at_100%_110%,rgba(244,63,94,.22),transparent_60%)] p-4 text-white sm:p-6 lg:p-10">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div className="min-w-0"><p className="eyebrow !text-sm">FIFA Night · FC 26</p><h1 className="truncate text-2xl uppercase sm:text-3xl lg:text-5xl">{t.name}</h1></div>
+        <div className="min-w-0"><p className="eyebrow !text-sm">FIFA Night · FC 27</p><h1 className="truncate text-2xl uppercase sm:text-3xl lg:text-5xl">{t.name}</h1></div>
         <div className="flex items-center gap-2 sm:gap-3">
           <span className="rounded-xl border border-white/10 bg-black/40 px-3 py-1 font-display text-2xl tabular-nums sm:px-4 sm:text-3xl lg:text-5xl">{clock}</span>
           <Link href={`/t/${id}`} className="btn-secondary !min-h-11 !px-3 text-sm sm:!px-5" aria-label="Salir del modo TV"><SignOut size={18} aria-hidden /><span className="hidden sm:inline">Salir</span></Link>

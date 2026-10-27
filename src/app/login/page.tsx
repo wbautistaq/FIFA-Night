@@ -95,7 +95,7 @@ function LoginForm() {
           <Trophy size={44} weight="duotone" className="text-neon drop-shadow-[0_0_12px_rgba(46,230,255,.7)]" />
         </span>
         <h1 className="mt-4 text-5xl uppercase leading-none">FIFA <span className="bg-gradient-to-r from-neon via-volt-light to-blaze-light bg-clip-text text-transparent">Night</span></h1>
-        <p className="mt-3 text-white/75">Torneos de EA SPORTS FC 26 entre amigos, en un minuto.</p>
+        <p className="mt-3 text-white/75">Torneos de EA SPORTS FC 27 entre amigos, en un minuto.</p>
       </header>
       <section className="card-glow space-y-4" aria-labelledby="login-title">
         <h2 id="login-title" className="text-lg uppercase">Entrar</h2>

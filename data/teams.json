@@ -246,8 +246,8 @@
     "short_name": "ATM",
     "league": "LaLiga",
     "country": "España",
-    "stars": 4.5,
-    "rating": 84,
+    "stars": 5,
+    "rating": 86,
     "kind": "club",
     "color_primary": "#CB3524",
     "color_secondary": "#272E61"
@@ -444,8 +444,8 @@
     "short_name": "INT",
     "league": "Serie A",
     "country": "Italia",
-    "stars": 5,
-    "rating": 86,
+    "stars": 4.5,
+    "rating": 84,
     "kind": "club",
     "color_primary": "#010E80",
     "color_secondary": "#000000"

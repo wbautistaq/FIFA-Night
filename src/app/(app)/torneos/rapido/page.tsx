@@ -81,7 +81,7 @@ export default function QuickTournamentPage() {
       <header>
         <p className="eyebrow flex items-center gap-1"><Lightning size={14} weight="fill" aria-hidden />En 30 segundos</p>
         <h1 className="text-3xl uppercase">Torneo relámpago</h1>
-        <p className="mt-1 text-sm text-white/70">Escribe quién juega y listo: sorteamos equipos de FC 26, armamos el calendario y arranca. Nadie necesita cuenta.</p>
+        <p className="mt-1 text-sm text-white/70">Escribe quién juega y listo: sorteamos equipos de FC 27, armamos el calendario y arranca. Nadie necesita cuenta.</p>
       </header>
 
       <section className="card space-y-3" aria-labelledby="qp">

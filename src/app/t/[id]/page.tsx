@@ -6,13 +6,17 @@ import { useT } from "@/components/TournamentShell";
 import { MatchRow, PlayerChip } from "@/components/MatchRow";
 import { ChampionCard, ShareButton } from "@/components/ShareCard";
 import { ActionButton, EmptyState, useToast } from "@/components/ui/primitives";
-import { startTournament, cancelTournament, finishTournament } from "@/app/actions/tournaments";
+import { applyFormat, startTournament, cancelTournament, finishTournament } from "@/app/actions/tournaments";
+import { FormatAdvicePanel } from "@/components/FormatAdvicePanel";
 import { nextSwissRound } from "@/app/actions/match-extras";
 import { FORMAT_LABEL, PLATFORM_LABEL } from "@/lib/labels";
 import { format as fmt } from "date-fns";
 import { es } from "date-fns/locale";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { CalendarBlank, CaretRight, CheckCircle, GameController, Television, Trophy, UsersThree, WarningCircle, type Icon } from "@phosphor-icons/react";
+
+// Formato guardado → opción del asistente de formato
+const FORMAT_OPTION_ID: Record<string, string> = { league: "league", league_double: "league_double", groups_playoffs: "groups", cup: "cup", double_elimination: "double", swiss: "swiss" };
 
 function Stat({ Icon: StatIcon, label, value }: { Icon: Icon; label: string; value: string }) {
   return (
@@ -43,6 +47,7 @@ export default function Overview() {
   const { tournament: t, participants, matches } = snapshot;
   const router = useRouter();
   const toast = useToast();
+  const [formatBusy, setFormatBusy] = useState(false);
   const base = `/t/${id}`;
 
   const playable = matches.filter((m) => m.status !== "cancelled" && m.home_id && m.away_id);
@@ -97,6 +102,20 @@ export default function Overview() {
             </Step>
           </ol>
           {participants.length < 4 && <p className="help">Necesitas al menos 4 jugadores.</p>}
+        </section>
+      )}
+
+      {viewer.isOrganizer && ["draft", "registration", "draw"].includes(t.status) && participants.length >= 4 && (
+        <section className="card space-y-3" aria-labelledby="fmt-h">
+          <h2 id="fmt-h" className="section-title">Cómo armar los cruces</h2>
+          <FormatAdvicePanel players={participants.length} stations={t.stations ?? 1} busy={formatBusy}
+            selected={FORMAT_OPTION_ID[t.format] ?? null}
+            onPick={async (o) => {
+              if (FORMAT_OPTION_ID[t.format] === o.id && o.format !== "groups_playoffs") return;
+              setFormatBusy(true);
+              await run(() => applyFormat(id, o.format, o.settings), `Formato: ${o.title}`);
+              setFormatBusy(false);
+            }} />
         </section>
       )}
 

@@ -8,16 +8,15 @@ import { CaretLeft, Lightning, Plus, X } from "@phosphor-icons/react";
 import { quickTournament, type QuickTournamentInput } from "@/app/actions/tournaments";
 import { Field, Spinner, Toggle } from "@/components/ui/primitives";
 import { TeamPoolPreview } from "@/components/TeamPoolPreview";
+import { FormatAdvicePanel } from "@/components/FormatAdvicePanel";
+import { formatAdvice } from "@/lib/engine/advice";
+import type { TournamentFormat } from "@/lib/engine/types";
 import { createClient } from "@/lib/supabase/browser";
 import { teamStars } from "@/lib/teams";
 import type { Team } from "@/lib/types";
 
-const FORMATS: { value: QuickTournamentInput["format"]; label: string; hint: string }[] = [
-  { value: "league", label: "Liga", hint: "Todos contra todos" },
-  { value: "cup", label: "Copa", hint: "Eliminación directa" },
-  { value: "league_double", label: "Ida y vuelta", hint: "Liga doble" },
-  { value: "swiss", label: "Suizo", hint: "Rondas por nivel" },
-];
+// Formatos que arma el torneo relámpago (la doble eliminación queda para torneos normales)
+const QUICK_FORMATS: TournamentFormat[] = ["league", "league_double", "groups_playoffs", "cup", "swiss"];
 const TEAMS: { value: QuickTournamentInput["teams"]; label: string }[] = [
   { value: "clubs", label: "Clubes" },
   { value: "national", label: "Selecciones" },
@@ -31,7 +30,8 @@ export default function QuickTournamentPage() {
   const [draft, setDraft] = useState("");
   const [players, setPlayers] = useState<string[]>([]);
   const [includeMe, setIncludeMe] = useState(true);
-  const [format, setFormat] = useState<QuickTournamentInput["format"]>("league");
+  // null = seguir la recomendación del asistente mientras cambia la cantidad de jugadores
+  const [picked, setPicked] = useState<string | null>(null);
   const [teams, setTeams] = useState<QuickTournamentInput["teams"]>("clubs");
   const [minStars, setMinStars] = useState(4);
   const [balanced, setBalanced] = useState(true);
@@ -41,6 +41,8 @@ export default function QuickTournamentPage() {
   const [bank, setBank] = useState<Team[] | null>(null);
 
   const total = players.length + (includeMe ? 1 : 0);
+  const advice = useMemo(() => formatAdvice(total, { formats: QUICK_FORMATS }), [total]);
+  const option = advice.options.find((o) => o.id === picked) ?? advice.options.find((o) => o.recommended) ?? advice.options[0];
 
   useEffect(() => {
     createClient().from("fifa_teams").select("*").is("tournament_id", null).then(({ data }) => setBank((data ?? []) as Team[]));
@@ -63,7 +65,8 @@ export default function QuickTournamentPage() {
   async function go() {
     setBusy(true);
     setError("");
-    const r = await quickTournament({ name, players, includeMe, format, teams, minStars, balanced });
+    const format = (option?.format ?? "league") as QuickTournamentInput["format"];
+    const r = await quickTournament({ name, players, includeMe, format, groupSize: option?.settings.group_size, qualifiers: option?.settings.qualifiers_per_group, teams, minStars, balanced });
     if (!r.ok || !r.data) {
       setBusy(false);
       return setError(r.ok ? "No se pudo crear el torneo" : r.error);
@@ -102,15 +105,13 @@ export default function QuickTournamentPage() {
         )}
       </section>
 
+      <section className="card space-y-4" aria-labelledby="qc">
+        <h2 id="qc" className="text-lg uppercase">Cómo armar los cruces</h2>
+        <FormatAdvicePanel players={total} selected={option?.id ?? null} formats={QUICK_FORMATS} onPick={(o) => setPicked(o.id)} />
+      </section>
+
       <section className="card space-y-4" aria-labelledby="qf">
-        <h2 id="qf" className="text-lg uppercase">Formato y equipos</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" role="radiogroup" aria-label="Formato">
-          {FORMATS.map((f) => (
-            <button key={f.value} type="button" role="radio" aria-checked={format === f.value} onClick={() => setFormat(f.value)} className={clsx("flex min-h-16 flex-col items-center justify-center rounded-xl border px-1 text-center transition", format === f.value ? "border-neon bg-neon/10 text-neon shadow-glow-neon" : "border-white/15 bg-white/[.04] hover:border-white/30")}>
-              <span className="font-display text-sm uppercase">{f.label}</span><span className="text-[11px] text-white/60">{f.hint}</span>
-            </button>
-          ))}
-        </div>
+        <h2 id="qf" className="text-lg uppercase">Equipos</h2>
         <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Tipo de equipos">
           {TEAMS.map((t) => (
             <button key={t.value} type="button" role="radio" aria-checked={teams === t.value} onClick={() => setTeams(t.value)} className={clsx("min-h-11 rounded-xl border text-sm font-semibold transition", teams === t.value ? "border-volt-light bg-volt/30" : "border-white/15 bg-white/[.04] hover:border-white/30")}>{t.label}</button>

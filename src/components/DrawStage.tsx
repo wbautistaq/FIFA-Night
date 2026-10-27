@@ -31,40 +31,53 @@ export function DrawStage({ participants, pool, teams, assignments, onDone, inst
   /** Muestra el resultado final sin animación. */
   instant?: boolean;
 }) {
-  const reduced = typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-  const skip = instant || reduced || !assignments;
+  // Con "reducir movimiento" no hay giro rápido de escudos, pero sí se revela uno por uno
+  const [reduced] = useState(() => typeof window !== "undefined" && Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches));
+  const skip = instant || !assignments;
   const [revealed, setRevealed] = useState(skip ? (assignments?.length ?? 0) : 0);
   const [landed, setLanded] = useState(false);
   const [spinId, setSpinId] = useState<string | null>(null);
   const doneRef = useRef(onDone);
   doneRef.current = onDone;
 
+  // El padre puede volver a renderizar (tiempo real, sondeo) con una lista nueva pero igual:
+  // se compara por contenido para que eso no reinicie la animación a mitad de camino
+  const assignmentsKey = assignments ? assignments.map((a) => `${a.participantId}:${a.teamId}`).join("|") : "";
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- assignmentsKey resume el contenido de assignments
+  const stableAssignments = useMemo(() => assignments, [assignmentsKey]);
   const teamById = useMemo(() => new Map(teams.map((t) => [t.id, t])), [teams]);
-  const forced = useMemo(() => new Set((assignments ?? []).map((a) => a.teamId)), [assignments]);
+  const forced = useMemo(() => new Set((stableAssignments ?? []).map((a) => a.teamId)), [stableAssignments]);
   const display = useMemo(() => {
     const ids = new Set(pool.map((t) => t.id));
     return [...pool, ...[...forced].filter((id) => !ids.has(id)).map((id) => teamById.get(id)).filter((t): t is Team => Boolean(t))];
   }, [pool, forced, teamById]);
   // Solo se iluminan escudos que están a la vista en la columna de equipos
   const spinIds = useMemo(() => groupByStars(display, POOL_LIMIT, forced).flatMap((g) => g.shown.map((t) => t.id)), [display, forced]);
-  const order = useMemo(() => (assignments ? participants.map((p) => assignments.find((a) => a.participantId === p.id)).filter((a): a is Assignment => Boolean(a)) : []), [assignments, participants]);
+  const participantsKey = participants.map((p) => p.id).join("|");
+  const order = useMemo(
+    () => (stableAssignments ? participants.map((p) => stableAssignments.find((a) => a.participantId === p.id)).filter((a): a is Assignment => Boolean(a)) : []),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- participantsKey resume el orden de participants
+    [stableAssignments, participantsKey],
+  );
   const total = order.length;
   const finished = assignments !== null && revealed >= total;
+  const spinKey = spinIds.join("|");
 
   useEffect(() => {
-    if (!assignments) return;
+    if (!stableAssignments) return;
     if (revealed >= total) {
       setSpinId(null);
       doneRef.current?.();
       return;
     }
     const target = order[revealed]!.teamId;
-    let i = Math.floor(Math.random() * spinIds.length);
-    const tick = setInterval(() => { i = (i + 1 + Math.floor(Math.random() * 3)) % Math.max(1, spinIds.length); setSpinId(spinIds[i] ?? null); }, 85);
-    const land = setTimeout(() => { clearInterval(tick); setSpinId(target); setLanded(true); }, SPIN_MS);
-    const next = setTimeout(() => { setLanded(false); setRevealed((r) => r + 1); }, SPIN_MS + LAND_MS);
+    const ids = spinKey ? spinKey.split("|") : [];
+    let i = Math.floor(Math.random() * Math.max(1, ids.length));
+    const tick = reduced ? undefined : setInterval(() => { i = (i + 1 + Math.floor(Math.random() * 3)) % Math.max(1, ids.length); setSpinId(ids[i] ?? null); }, 85);
+    const land = setTimeout(() => { clearInterval(tick); setSpinId(target); setLanded(true); }, reduced ? 500 : SPIN_MS);
+    const next = setTimeout(() => { setLanded(false); setRevealed((r) => r + 1); }, (reduced ? 500 : SPIN_MS) + LAND_MS);
     return () => { clearInterval(tick); clearTimeout(land); clearTimeout(next); };
-  }, [assignments, revealed, total, order, spinIds]);
+  }, [stableAssignments, revealed, total, order, spinKey, reduced]);
 
   const taken = useMemo(() => new Set(order.slice(0, revealed).map((a) => a.teamId)), [order, revealed]);
   const teamOf = new Map(order.map((a) => [a.participantId, a.teamId]));

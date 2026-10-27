@@ -11,6 +11,7 @@ import { DEFAULT_SETTINGS } from "@/lib/engine/types";
 import { DEFAULT_DRAW_OPTIONS, DrawError, drawTeams, type TeamLite } from "@/lib/engine/draw";
 import { secureRng } from "@/lib/engine/rng";
 import { recommendedSwissRounds } from "@/lib/engine/swiss";
+import { bestGroups, groupSizes } from "@/lib/engine/advice";
 import { GAMER_AVATARS, emojiAvatar } from "@/lib/avatars";
 import { confirmDraw, saveDraw } from "@/app/actions/draw";
 
@@ -269,12 +270,47 @@ const quickSchema = z.object({
   name: z.string().trim().max(80).optional().or(z.literal("")),
   players: z.array(z.string().trim().min(1).max(40)).min(1, "Agrega al menos un jugador").max(31),
   includeMe: z.boolean(),
-  format: z.enum(["league", "league_double", "cup", "swiss"]),
+  format: z.enum(["league", "league_double", "cup", "swiss", "groups_playoffs"]),
+  /** Solo para grupos: lo que sugiere el asistente de formato para esta cantidad de jugadores. */
+  groupSize: z.number().int().min(3).max(8).optional(),
+  qualifiers: z.number().int().min(1).max(4).optional(),
   minStars: z.number().min(0).max(5),
   teams: z.enum(["clubs", "national", "all"]),
   balanced: z.boolean(),
 });
 export type QuickTournamentInput = z.infer<typeof quickSchema>;
+
+/** Ajustes de grupos válidos para esa cantidad: los pedidos si sirven, si no los que sugiere el asistente. */
+function groupSettings(players: number, groupSize?: number, qualifiers?: number) {
+  const valid = groupSize && qualifiers && qualifiers < Math.min(...groupSizes(players, groupSize));
+  const best = valid ? { groupSize, qualifiers } : bestGroups(players);
+  if (!best) throw new FixtureError("No hay una forma de armar grupos con esa cantidad de jugadores");
+  return { ...DEFAULT_SETTINGS, group_size: best.groupSize, qualifiers_per_group: best.qualifiers };
+}
+
+/** Organizador: aplica una de las opciones del asistente (formato + ajustes) antes de iniciar el torneo. */
+export async function applyFormat(tournamentId: string, format: string, patch: unknown): Promise<ActionResult> {
+  try {
+    const id = uuid.parse(tournamentId);
+    const f = z.enum(["league", "league_double", "cup", "double_elimination", "groups_playoffs", "swiss"]).parse(format);
+    const p = z.object({
+      group_size: z.number().int().min(3).max(8).optional(),
+      qualifiers_per_group: z.number().int().min(1).max(4).optional(),
+      swiss_rounds: z.number().int().min(1).max(10).optional(),
+    }).strict().parse(patch ?? {});
+    const actor = await requireActor(id);
+    if (!actor.isOrganizer) return fail("Solo el organizador cambia el formato");
+    const { data: t, error: te } = await actor.client.from("tournaments").select("status,settings").eq("id", id).single();
+    if (te) throw te;
+    if (!["draft", "registration", "draw"].includes(t.status as string)) return fail("El formato ya no se puede cambiar: el torneo empezó");
+    const { error } = await actor.client.from("tournaments").update({ format: f, settings: { ...(t.settings as object), ...p } }).eq("id", id);
+    if (error) throw error;
+    revalidatePath(`/t/${id}`);
+    return ok();
+  } catch (e) {
+    return fail(e instanceof z.ZodError ? "Opción inválida" : errorMessage(e));
+  }
+}
 
 /**
  * Torneo relámpago: crea el torneo, agrega a los jugadores (invitados con avatar gamer al azar),
@@ -297,7 +333,9 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
       format: q.format,
       max_players: Math.max(4, total),
       rules: "",
-      settings: q.format === "swiss" ? { ...DEFAULT_SETTINGS, swiss_rounds: recommendedSwissRounds(total) } : DEFAULT_SETTINGS,
+      settings: q.format === "swiss" ? { ...DEFAULT_SETTINGS, swiss_rounds: recommendedSwissRounds(total) }
+        : q.format === "groups_playoffs" ? groupSettings(total, q.groupSize, q.qualifiers)
+        : DEFAULT_SETTINGS,
     });
     if (!created.ok || !created.data) return fail(created.ok ? "No se pudo crear el torneo" : created.error);
     const id = created.data.id;

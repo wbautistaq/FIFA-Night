@@ -83,7 +83,8 @@ export default function Draw() {
     if (set.has(l)) set.delete(l); else set.add(l);
     setOpts({ ...opts, leagues: [...set] });
   };
-  const current = proposal ?? (assignments.length ? assignments.map((a) => ({ participantId: a.participant_id, teamId: a.team_id })) : null);
+  const saved = useMemo(() => (assignments.length ? assignments.map((a) => ({ participantId: a.participant_id, teamId: a.team_id })) : null), [assignments]);
+  const current = proposal ?? saved;
   const flag = async (teamId: string, key: "favorite" | "banned", value: boolean) => {
     const r = await setTeamFlag(id, teamId, key, value);
     if (!r.ok) toast.show("error", r.error); else await refresh();

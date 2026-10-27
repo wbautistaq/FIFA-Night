@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import clsx from "clsx";
 import { CaretLeft, Lightning, Plus, X } from "@phosphor-icons/react";
 import { quickTournament, type QuickTournamentInput } from "@/app/actions/tournaments";
-import { Field, Toggle } from "@/components/ui/primitives";
+import { Field, Spinner, Toggle } from "@/components/ui/primitives";
+import { TeamPoolPreview } from "@/components/TeamPoolPreview";
+import { createClient } from "@/lib/supabase/browser";
+import { teamStars } from "@/lib/teams";
+import type { Team } from "@/lib/types";
 
 const FORMATS: { value: QuickTournamentInput["format"]; label: string; hint: string }[] = [
   { value: "league", label: "Liga", hint: "Todos contra todos" },
@@ -34,7 +38,16 @@ export default function QuickTournamentPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  const [bank, setBank] = useState<Team[] | null>(null);
+
   const total = players.length + (includeMe ? 1 : 0);
+
+  useEffect(() => {
+    createClient().from("fifa_teams").select("*").is("tournament_id", null).then(({ data }) => setBank((data ?? []) as Team[]));
+  }, []);
+  // Mismos filtros que aplica el servidor al sortear
+  const preview = useMemo(() => (bank ?? []).filter((t) =>
+    !t.banned && (teams === "all" || (teams === "clubs" ? t.kind === "club" : t.kind === "national")) && teamStars(t) >= minStars), [bank, teams, minStars]);
 
   // Acepta varios nombres a la vez separados por comas o saltos de línea
   function add() {
@@ -55,7 +68,8 @@ export default function QuickTournamentPage() {
       setBusy(false);
       return setError(r.ok ? "No se pudo crear el torneo" : r.error);
     }
-    router.push(`/t/${r.data.id}`);
+    // Primero se ve el sorteo animado; desde ahí se pasa al torneo
+    router.push(`/t/${r.data.id}/sorteo?reveal=1`);
   }
 
   return (
@@ -108,6 +122,12 @@ export default function QuickTournamentPage() {
             {[5, 4.5, 4, 3.5, 3].map((s) => <option key={s} value={s}>{s} ★ o más</option>)}
           </select>
         </Field>
+        <div className="rounded-xl border border-white/10 bg-black/20 p-3" aria-live="polite">
+          <p className="mb-2 text-sm text-white/75">
+            {bank === null ? "Cargando equipos…" : <><span className="font-display text-neon">{preview.length}</span> equipos entran en el sorteo{total > preview.length ? <span className="text-blaze-light"> · faltan equipos para {total} jugadores</span> : null}</>}
+          </p>
+          {bank === null ? <Spinner label="Cargando equipos" /> : <TeamPoolPreview teams={preview} limit={8} />}
+        </div>
         <Toggle id="q-bal" label="Equipos parejos" help="Equipos con estrellas parecidas para todos" checked={balanced} onChange={setBalanced} />
         <Field label="Nombre del torneo (opcional)" htmlFor="q-name">
           <input id="q-name" className="input" placeholder="Noche FIFA" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />

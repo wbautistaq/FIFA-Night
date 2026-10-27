@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import clsx from "clsx";
-import { ArrowsClockwise, Heart, Target, LockSimple, MagnifyingGlass, Prohibit, Shuffle, Trash, UsersThree } from "@phosphor-icons/react";
+import { ArrowsClockwise, FilmSlate, Heart, Target, LockSimple, MagnifyingGlass, Prohibit, Shuffle, Trash, UsersThree } from "@phosphor-icons/react";
 import { useT } from "@/components/TournamentShell";
 import { DrawStage } from "@/components/DrawStage";
 import { ActionButton, Avatar, EmptyState, Field, Stars, Toggle, useToast } from "@/components/ui/primitives";
@@ -12,7 +13,6 @@ import { DEFAULT_DRAW_OPTIONS, DrawError, drawTeams, filterPool, ratingSpread, t
 import { secureRng } from "@/lib/engine/rng";
 import { teamStars } from "@/lib/teams";
 import { addTeam, confirmDraw, removeTeam, saveDraw, setTeamFlag } from "@/app/actions/draw";
-import { PlayerChip } from "@/components/MatchRow";
 
 const STAR_STEPS = [5, 4.5, 4, 3.5, 3, 2.5, 2];
 // Misma escala que el banco FC 26 (scripts/build-teams.mjs): 5★ = 86, cada media estrella = 2 puntos
@@ -26,6 +26,11 @@ export default function Draw() {
   const [opts, setOpts] = useState<DrawOptions>(DEFAULT_DRAW_OPTIONS);
   const [proposal, setProposal] = useState<{ participantId: string; teamId: string }[] | null>(null);
   const [animating, setAnimating] = useState(false);
+  // Cada sorteo nuevo vuelve a montar el escenario para que la animación arranque desde cero
+  const [drawKey, setDrawKey] = useState(0);
+  // ?reveal=1 (al venir del torneo relámpago) reproduce la animación del sorteo ya guardado
+  const revealParam = useSearchParams().get("reveal") === "1";
+  const [replay, setReplay] = useState(revealParam);
   // Ruleta: cada jugador elige entre 3 equipos; su resultado se muestra sin la animación del sorteo
   const [roulette, setRoulette] = useState(false);
   const [fromRoulette, setFromRoulette] = useState(false);
@@ -37,6 +42,7 @@ export default function Draw() {
   const canManage = viewer.isOrganizer && !(t.draw_confirmed || !["registration", "draw", "draft"].includes(t.status));
   const leagues = useMemo(() => [...new Set(teams.filter((x) => x.kind === "club").map((x) => x.league))].sort(), [teams]);
   const pool = useMemo(() => filterPool(teams, opts), [teams, opts]);
+  const poolTeams = useMemo(() => { const ids = new Set(pool.map((p) => p.id)); return teams.filter((tm) => ids.has(tm.id)); }, [teams, pool]);
   const shown = useMemo(() => {
     const q = search.trim().toLowerCase();
     return teams.filter((x) =>
@@ -50,7 +56,9 @@ export default function Draw() {
       const res = drawTeams(participants.map((p) => p.id), teams, opts, secureRng);
       setProposal(res);
       setFromRoulette(false);
+      setDrawKey((k) => k + 1);
       setAnimating(true);
+      requestAnimationFrame(() => document.getElementById("res-h")?.scrollIntoView({ behavior: "smooth", block: "start" }));
     } catch (e) {
       toast.show("error", e instanceof DrawError ? e.message : "No se pudo sortear");
     }
@@ -91,7 +99,7 @@ export default function Draw() {
       {participants.length < 2 ? <EmptyState icon={UsersThree} title="Necesitas jugadores para sortear">Invita a tus amigos primero.</EmptyState> : null}
 
       {canManage && participants.length >= 2 && roulette && (
-        <TeamRoulette participants={participants} pool={teams.filter((tm) => pool.some((p) => p.id === tm.id))}
+        <TeamRoulette participants={participants} pool={poolTeams}
           onCancel={() => setRoulette(false)}
           onComplete={(picks) => { setProposal(picks); setFromRoulette(true); setAnimating(false); setRoulette(false); requestAnimationFrame(() => document.getElementById("res-h")?.scrollIntoView({ behavior: "smooth", block: "start" })); }} />
       )}
@@ -128,6 +136,13 @@ export default function Draw() {
         </section>
       )}
 
+      {!current && participants.length >= 2 && !roulette && (
+        <section className="space-y-3" aria-labelledby="prev-h">
+          <h3 id="prev-h" className="text-lg uppercase">Así llegan al sorteo</h3>
+          <DrawStage participants={participants} pool={poolTeams} teams={teams} assignments={null} />
+        </section>
+      )}
+
       {current && (
         <section className="space-y-3" aria-labelledby="res-h">
           <h3 id="res-h" className="flex items-center gap-2 text-lg uppercase">{proposal ? "Resultado del sorteo" : "Equipos asignados"}{t.draw_confirmed ? <LockSimple size={18} weight="fill" className="text-neon" aria-label="Bloqueado" /> : null}</h3>
@@ -135,8 +150,13 @@ export default function Draw() {
             <ul className="grid gap-2 sm:grid-cols-2">{proposal.map((a) => { const p = participants.find((x) => x.id === a.participantId); const tm = teams.find((x) => x.id === a.teamId); return (
               <li key={a.participantId} className="card flex items-center gap-3 !p-3">{p ? <Avatar name={p.display_name} color={p.avatar_color} url={p.avatar_url} size={40} /> : null}<span className="min-w-0 flex-1"><span className="block truncate font-bold">{p?.nickname || p?.display_name}</span><span className="block truncate text-[11px] uppercase tracking-wide text-white/60">{tm?.name}</span></span>{tm ? <TeamCrest team={tm} size={34} /> : null}</li>
             ); })}</ul>
-          ) : proposal ? <DrawStage participants={participants} teams={teams} assignments={proposal} onDone={() => setAnimating(false)} />
-            : <ul className="grid gap-2 sm:grid-cols-2">{current.map((a) => <li key={a.participantId} className="card !p-3"><PlayerChip participantId={a.participantId} lead="player" /></li>)}</ul>}
+          ) : proposal ? <DrawStage key={`draw-${drawKey}`} participants={participants} pool={poolTeams} teams={teams} assignments={proposal} onDone={() => setAnimating(false)} />
+            : (
+              <>
+                <DrawStage key={`saved-${drawKey}-${replay}`} participants={participants} pool={poolTeams} teams={teams} assignments={current} instant={!replay} onDone={() => setReplay(false)} />
+                {!replay && <button type="button" className="btn-ghost w-full !min-h-10 text-sm" onClick={() => { setDrawKey((k) => k + 1); setReplay(true); }}><FilmSlate size={18} aria-hidden />Ver la animación del sorteo</button>}
+              </>
+            )}
           {proposal && !animating && <p className="help">Diferencia entre el mejor y el peor equipo: {(ratingSpread(proposal, teams) / 4).toFixed(1)} ★</p>}
           {viewer.isOrganizer && !t.draw_confirmed && !animating && (
             <div className="flex gap-2">

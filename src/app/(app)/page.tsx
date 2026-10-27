@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { TournamentCard } from "@/components/TournamentCard";
 import { EmptyState } from "@/components/ui/primitives";
 import type { Tournament } from "@/lib/types";
-import { EnvelopeSimple, Lightning, Plus, Trophy } from "@phosphor-icons/react/dist/ssr";
+import { CaretDown, EnvelopeSimple, Lightning, Plus, Prohibit, Trophy } from "@phosphor-icons/react/dist/ssr";
 
 export const dynamic = "force-dynamic";
 
@@ -24,8 +24,11 @@ export default async function Home() {
     .order("created_at", { ascending: false });
   type Row = Pick<Tournament, "id" | "owner_id" | "name" | "status" | "format" | "platform" | "starts_at"> & { tournament_participants: { count: number }[] };
   const rows = (data ?? []) as unknown as Row[];
-  const mine = rows.filter((t) => t.owner_id === auth.user.id);
-  const invited = rows.filter((t) => t.owner_id !== auth.user.id);
+  // Los cancelados van aparte, plegados al final: ya no cuentan para nada
+  const active = rows.filter((t) => t.status !== "cancelled");
+  const cancelled = rows.filter((t) => t.status === "cancelled");
+  const mine = active.filter((t) => t.owner_id === auth.user.id);
+  const invited = active.filter((t) => t.owner_id !== auth.user.id);
 
   return (
     <div className="space-y-8">
@@ -59,6 +62,16 @@ export default async function Home() {
           <div className="grid gap-3">{invited.map((t) => <TournamentCard key={t.id} t={t} players={t.tournament_participants[0]?.count} />)}</div>
         )}
       </section>
+
+      {cancelled.length > 0 && (
+        <details className="group">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between rounded-xl px-1 text-sm font-semibold uppercase tracking-wide text-white/55 hover:text-white">
+            <span className="flex items-center gap-2"><Prohibit size={18} aria-hidden />Cancelados ({cancelled.length})</span>
+            <CaretDown size={16} className="transition group-open:rotate-180" aria-hidden />
+          </summary>
+          <div className="mt-2 grid gap-3 opacity-70">{cancelled.map((t) => <TournamentCard key={t.id} t={t} players={t.tournament_participants[0]?.count} />)}</div>
+        </details>
+      )}
     </div>
   );
 }

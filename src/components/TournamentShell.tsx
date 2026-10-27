@@ -7,6 +7,7 @@ import { useTournament } from "@/hooks/useTournament";
 import { Bell, CalendarBlank, CaretLeft, ChartBar, House, ListNumbers, SquaresFour, TreeStructure, type Icon } from "@phosphor-icons/react";
 import { ErrorState } from "@/components/ui/primitives";
 import { TurnAlert } from "@/components/TurnAlert";
+import { CancelledTournament } from "@/components/CancelledTournament";
 import { STATUS_LABEL } from "@/lib/labels";
 
 type Ctx = ReturnType<typeof useTournament> & { snapshot: NonNullable<ReturnType<typeof useTournament>["snapshot"]>; viewer: NonNullable<ReturnType<typeof useTournament>["viewer"]>; derived: NonNullable<ReturnType<typeof useTournament>["derived"]>; id: string };
@@ -65,6 +66,7 @@ export function TournamentShell({ id, children }: { id: string; children: ReactN
   }
 
   const ctx = { ...t, snapshot: t.snapshot, viewer: t.viewer, derived: t.derived, id } as Ctx;
+  if (ctx.snapshot.tournament.status === "cancelled") return <CancelledTournament id={id} snapshot={ctx.snapshot} viewer={ctx.viewer} />;
   if (isTv) return <TournamentCtx.Provider value={ctx}>{children}</TournamentCtx.Provider>;
 
   const base = `/t/${id}`;

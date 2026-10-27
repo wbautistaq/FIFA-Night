@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartBar, Trophy, UserCircle } from "@phosphor-icons/react";
+import { ChartBar, ShieldCheck, Trophy, UserCircle } from "@phosphor-icons/react";
 
 const items = [
   { href: "/", label: "Torneos", Icon: Trophy },
@@ -11,12 +11,14 @@ const items = [
 ];
 
 /** Barra inferior flotante de la zona personal (mismo estilo que la del torneo). */
-export function AppNav() {
+export function AppNav({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
+  // Solo el creador de la plataforma ve el acceso al panel de administración
+  const links = isAdmin ? [...items, { href: "/admin", label: "Admin", Icon: ShieldCheck }] : items;
   return (
     <nav aria-label="Navegación principal" className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),.75rem)]">
       <ul className="mx-auto flex max-w-2xl rounded-2xl border border-white/10 bg-pitch-900/85 p-1 shadow-[0_-8px_40px_-12px_rgba(139,92,246,.45)] backdrop-blur-xl">
-        {items.map(({ href, label, Icon }) => {
+        {links.map(({ href, label, Icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <li key={href} className="flex-1">

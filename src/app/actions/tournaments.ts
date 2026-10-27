@@ -66,12 +66,17 @@ export async function updateTournament(id: string, input: TournamentInput): Prom
   }
 }
 
+/** Organizador: elimina un torneo en borrador o cancelado con todo su contenido, fotos incluidas. */
 export async function deleteTournament(id: string): Promise<ActionResult> {
   try {
+    const tid = uuid.parse(id);
     const { supabase } = await requireUser();
-    const { error, count } = await supabase.from("tournaments").delete({ count: "exact" }).eq("id", uuid.parse(id));
+    const { error } = await supabase.rpc("delete_tournament", { p_tournament: tid });
     if (error) throw error;
-    if (!count) return fail("Solo puedes eliminar torneos en borrador");
+    // Las fotos de marcador no caen en cascada: viven en Storage
+    const storage = createAdminClient().storage.from("fifa-night");
+    const { data: files } = await storage.list(`proofs/${tid}`);
+    if (files?.length) await storage.remove(files.map((f) => `proofs/${tid}/${f.name}`));
     revalidatePath("/");
     return ok();
   } catch (e) {

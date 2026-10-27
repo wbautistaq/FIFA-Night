@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Permite verificar una build de producción sin pisar la carpeta .next del servidor de desarrollo
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   poweredByHeader: false,
   // Solo desarrollo: permite abrir el servidor de dev desde el celular en la misma red Wi-Fi
   allowedDevOrigins: ["192.168.31.171"],

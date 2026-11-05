@@ -15,6 +15,7 @@ import { bestGroups, groupSizes } from "@/lib/engine/advice";
 import { guestNameConflict, normName } from "@/lib/people";
 import { GAMER_AVATARS, emojiAvatar } from "@/lib/avatars";
 import { confirmDraw, saveDraw } from "@/app/actions/draw";
+import { formatDayMonth } from "@/lib/datetime";
 
 const uuid = z.string().uuid();
 
@@ -347,7 +348,7 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
     if (conflict) return fail(conflict);
 
     const created = await createTournament({
-      name: q.name || `Noche FIFA ${new Date().toLocaleDateString("es", { day: "numeric", month: "short" })}`,
+      name: q.name || `Noche FIFA ${formatDayMonth(new Date())}`,
       starts_at: new Date().toISOString(),
       platform: "presencial",
       format: q.format,

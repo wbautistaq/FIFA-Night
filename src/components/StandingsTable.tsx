@@ -8,8 +8,10 @@ import { useT } from "@/components/TournamentShell";
 import type { StandingRow } from "@/lib/types";
 
 const COLS = ["PJ", "G", "E", "P", "GF", "GC", "DG", "Pts"];
-// GF y GC se ocultan en móvil para que los puntos se vean sin desplazar la tabla (la DG ya resume ambos)
-const OPTIONAL = new Set([4, 5]);
+// E, P, GF y GC se ocultan en móvil para que los puntos se vean sin desplazar la tabla (G y DG ya resumen lo esencial)
+const OPTIONAL = new Set([2, 3, 4, 5]);
+// Si aun así no cabe (pantallas muy angostas), la columna de puntos queda fija a la derecha
+const PTS_STICKY = "sticky right-0 bg-pitch-950/95";
 
 export function StandingsTable({ rows, qualifiers = 0, large = false }: { rows: StandingRow[]; qualifiers?: number; large?: boolean }) {
   const { derived } = useT();
@@ -39,7 +41,7 @@ export function StandingsTable({ rows, qualifiers = 0, large = false }: { rows: 
         <caption className="sr-only">Tabla de posiciones</caption>
         <thead className="bg-black/30 font-display text-[11px] uppercase tracking-wider text-white/60">
           <tr><th scope="col" className={clsx(cell, "text-left")}>#</th><th scope="col" className={clsx(cell, "text-left")}>Jugador</th>
-            {COLS.map((h, i) => <th key={h} scope="col" className={clsx(cell, "text-center", h === "Pts" && "text-neon", !large && OPTIONAL.has(i) && "hidden sm:table-cell")}>{h}</th>)}</tr>
+            {COLS.map((h, i) => <th key={h} scope="col" className={clsx(cell, "text-center", h === "Pts" && `text-neon ${PTS_STICKY}`, !large && OPTIONAL.has(i) && "hidden sm:table-cell")}>{h}</th>)}</tr>
         </thead>
         <tbody>
           {rows.map((r) => {
@@ -56,7 +58,7 @@ export function StandingsTable({ rows, qualifiers = 0, large = false }: { rows: 
                   </div>
                 </td>
                 {[r.played, r.won, r.drawn, r.lost, r.goals_for, r.goals_against, r.goal_difference > 0 ? `+${r.goal_difference}` : r.goal_difference].map((v, i) => <td key={i} className={clsx(cell, "text-center tabular-nums text-white/80", !large && OPTIONAL.has(i) && "hidden sm:table-cell")}>{v}</td>)}
-                <td className={clsx(cell, "text-center font-display tabular-nums text-neon")}>{r.points}</td>
+                <td className={clsx(cell, PTS_STICKY, "text-center font-display tabular-nums text-neon")}>{r.points}</td>
               </tr>
             );
           })}

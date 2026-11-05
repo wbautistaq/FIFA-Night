@@ -17,10 +17,14 @@ export default async function Home() {
   // El apodo es obligatorio: es como los amigos te encuentran para agregarte a sus torneos
   if (!profile?.nickname) redirect("/bienvenida");
 
-  const { data } = await supabase
+  // La relación se nombra explícitamente: tournaments y tournament_participants se enlazan por dos llaves
+  // (tournament_id y champion_participant_id) y, sin indicarla, la consulta falla por ambigua.
+  const { data, error } = await supabase
     .from("tournaments")
-    .select("id,owner_id,name,status,format,platform,starts_at,tournament_participants(count)")
+    .select("id,owner_id,name,status,format,platform,starts_at,tournament_participants!tournament_participants_tournament_id_fkey(count)")
     .order("created_at", { ascending: false });
+  // Un fallo de lectura no debe verse como "no tienes torneos"
+  if (error) throw new Error(`No se pudieron cargar tus torneos: ${error.message}`);
   type Row = Pick<Tournament, "id" | "owner_id" | "name" | "status" | "format" | "platform" | "starts_at"> & { tournament_participants: { count: number }[] };
   const rows = (data ?? []) as unknown as Row[];
   // Los cancelados van aparte, plegados al final: ya no cuentan para nada

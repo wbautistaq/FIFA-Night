@@ -1,7 +1,8 @@
 "use client";
 
 import clsx from "clsx";
-import { isValidElement, useEffect, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from "react";
+import { isValidElement, useEffect, useRef, useState, type ButtonHTMLAttributes, type ReactElement, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { avatarEmojiImage } from "@/lib/avatars";
 import { ArrowClockwise, ArrowCounterClockwise, CheckCircle, Crown, Handshake, Medal, ShieldCheck, SoccerBall, Star, StarHalf, Target, Trophy, Wall, WarningOctagon, type Icon } from "@phosphor-icons/react";
 
@@ -148,25 +149,50 @@ export function useToast() {
   return { show: (kind: ToastKind, text: string) => setToast({ kind, text }), node };
 }
 
+/** Confirmación propia de la app: las ventanas nativas del navegador se pueden bloquear y no combinan con el sitio. */
+function ConfirmDialog({ message, confirmLabel, danger, onCancel, onConfirm }: { message: string; confirmLabel: string; danger: boolean; onCancel: () => void; onConfirm: () => void }) {
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    cancelRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onCancel();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onCancel]);
+  return createPortal(
+    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={onCancel}>
+      <div role="alertdialog" aria-modal="true" aria-label="Confirmar acción" className="card w-full max-w-sm space-y-4 !bg-pitch-900" onClick={(e) => e.stopPropagation()}>
+        <p className="text-base text-white">{message}</p>
+        <div className="grid grid-cols-2 gap-2">
+          <button ref={cancelRef} type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>
+          <button type="button" className={danger ? "btn-danger" : "btn-primary"} onClick={onConfirm}>{confirmLabel}</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
 export function ActionButton({ onAction, children, className = "btn-primary", confirm, ...rest }: Omit<ButtonHTMLAttributes<HTMLButtonElement>, "onClick"> & { onAction: () => Promise<void> | void; confirm?: string }) {
   const [busy, setBusy] = useState(false);
+  const [asking, setAsking] = useState(false);
+  const run = async () => {
+    setAsking(false);
+    setBusy(true);
+    try {
+      await onAction();
+    } finally {
+      setBusy(false);
+    }
+  };
   return (
-    <button
-      {...rest}
-      className={className}
-      disabled={busy || rest.disabled}
-      onClick={async () => {
-        if (confirm && !window.confirm(confirm)) return;
-        setBusy(true);
-        try {
-          await onAction();
-        } finally {
-          setBusy(false);
-        }
-      }}
-    >
-      {busy ? "…" : children}
-    </button>
+    <>
+      <button {...rest} className={className} disabled={busy || rest.disabled} onClick={() => (confirm ? setAsking(true) : void run())}>
+        {busy ? "…" : children}
+      </button>
+      {asking && confirm ? <ConfirmDialog message={confirm} confirmLabel={typeof children === "string" ? children : "Confirmar"} danger={className.includes("btn-danger") || className.includes("text-red")} onCancel={() => setAsking(false)} onConfirm={() => void run()} /> : null}
+    </>
   );
 }
 

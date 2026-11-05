@@ -10,10 +10,9 @@ import { applyFormat, startTournament, cancelTournament, finishTournament } from
 import { FormatAdvicePanel } from "@/components/FormatAdvicePanel";
 import { nextSwissRound } from "@/app/actions/match-extras";
 import { FORMAT_LABEL, PLATFORM_LABEL } from "@/lib/labels";
-import { format as fmt } from "date-fns";
-import { es } from "date-fns/locale";
 import { useState, type ReactNode } from "react";
 import { CalendarBlank, CaretRight, CheckCircle, GameController, Television, Trophy, UsersThree, WarningCircle, type Icon } from "@phosphor-icons/react";
+import { formatDate, formatTime } from "@/lib/datetime";
 
 // Formato guardado → opción del asistente de formato
 const FORMAT_OPTION_ID: Record<string, string> = { league: "league", league_double: "league_double", groups_playoffs: "groups", cup: "cup", double_elimination: "double", swiss: "swiss" };
@@ -86,7 +85,7 @@ export default function Overview() {
 
       <section className="card grid grid-cols-3 gap-2 text-center">
         <Stat Icon={GameController} label={PLATFORM_LABEL[t.platform]} value={FORMAT_LABEL[t.format]} />
-        <Stat Icon={CalendarBlank} label={fmt(new Date(t.starts_at), "EEE d MMM", { locale: es })} value={fmt(new Date(t.starts_at), "HH:mm")} />
+        <Stat Icon={CalendarBlank} label={formatDate(t.starts_at)} value={formatTime(t.starts_at)} />
         <Stat Icon={UsersThree} label="Jugadores" value={`${participants.length}/${t.max_players}`} />
         {t.rules ? <p className="col-span-3 whitespace-pre-wrap rounded-xl border border-white/10 bg-black/20 p-3 text-left text-sm text-white/80">{t.rules}</p> : null}
       </section>

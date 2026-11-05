@@ -14,11 +14,12 @@ import {
   adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetBan, type AdminOverview, type AdminUser,
 } from "@/app/actions/admin";
 import { SessionsTab } from "./SessionsTab";
+import { formatFullDateTime } from "@/lib/datetime";
 
 const TABS = ["Resumen", "Usuarios", "Sesiones", "Torneos", "Registro"] as const;
 type Tab = (typeof TABS)[number];
 
-const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("es", { dateStyle: "short", timeStyle: "short" }) : "Nunca");
+const when = (iso: string | null) => (iso ? formatFullDateTime(iso) : "Nunca");
 
 /** Panel del creador de la plataforma. Cada acción se valida y registra en el servidor. */
 export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: string }) {

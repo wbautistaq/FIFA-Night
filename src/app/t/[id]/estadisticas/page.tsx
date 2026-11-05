@@ -40,13 +40,13 @@ export default function Stats() {
         <div className="card overflow-x-auto !p-0">
           <table className="w-full min-w-[560px] text-sm">
             <caption className="sr-only">Estadísticas por jugador</caption>
-            <thead className="text-xs uppercase text-white/60"><tr><th className="p-2 text-left">Jugador</th>{["PJ", "G", "E", "P", "GF", "GC", "% V", "Racha", "MVP", t.settings.fifa_points ? "FP" : ""].filter(Boolean).map((h) => <th key={h} scope="col" className="p-2 text-center">{h}</th>)}</tr></thead>
+            <thead className="text-xs uppercase text-white/60"><tr><th className="p-2 text-left">Jugador</th>{["PJ", "G", "E", "P", "GF", "GC", "% V", "Racha", "MVP", t.settings.fifa_points ? "FP" : ""].filter(Boolean).map((h) => <th key={h} scope="col" className={h === "FP" ? "sticky right-0 bg-pitch-950/95 p-2 text-center" : "p-2 text-center"}>{h}</th>)}</tr></thead>
             <tbody>
               {rows.map((s) => (
                 <tr key={s.participant_id} className="border-t border-white/5">
                   <td className="p-2"><Link href={`/t/${id}/jugador/${s.participant_id}`}><PlayerChip participantId={s.participant_id} /></Link></td>
                   {[s.played, s.won, s.drawn, s.lost, s.goals_for, s.goals_against, s.played ? `${Math.round((s.won / s.played) * 100)}%` : "–", s.current_streak > 0 ? `🔥${s.current_streak}` : s.current_streak < 0 ? `❄️${-s.current_streak}` : "–", s.mvp_count].map((v, i) => <td key={i} className="p-2 text-center tabular-nums">{v}</td>)}
-                  {t.settings.fifa_points && <td className="p-2 text-center font-bold tabular-nums text-neon">{s.fifa_points}</td>}
+                  {t.settings.fifa_points && <td className="sticky right-0 bg-pitch-950/95 p-2 text-center font-bold tabular-nums text-neon">{s.fifa_points}</td>}
                 </tr>
               ))}
             </tbody>

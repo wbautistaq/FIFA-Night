@@ -56,14 +56,14 @@ test("flujo completo: crear → invitar → sortear → fixtures → resultados 
   await page.goto(`${tournamentUrl}/sorteo`);
   await page.getByRole("button", { name: /Sortear/ }).click();
   await expect(page.getByRole("button", { name: "Confirmar sorteo" })).toBeVisible({ timeout: 20_000 });
-  page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Confirmar sorteo" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Confirmar sorteo" }).click();
   await expect(page.getByText("Equipos asignados")).toBeVisible();
 
   // 4. Iniciar y generar fixtures
   await page.goto(tournamentUrl);
-  page.once("dialog", (d) => d.accept());
   await page.getByRole("button", { name: "Iniciar" }).click();
+  await page.getByRole("alertdialog").getByRole("button", { name: "Iniciar" }).click();
   await page.goto(`${tournamentUrl}/calendario`);
   await expect(page.getByRole("link", { name: "Abrir partido" })).toHaveCount(6);
 

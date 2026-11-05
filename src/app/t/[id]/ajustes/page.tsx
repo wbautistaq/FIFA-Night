@@ -1,13 +1,13 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { format as fmt } from "date-fns";
 import { useT } from "@/components/TournamentShell";
 import { TournamentForm } from "@/components/TournamentForm";
 import { ActionButton, EmptyState, useToast } from "@/components/ui/primitives";
 import { cancelTournament, deleteTournament, duplicateTournament, setCoorganizer, setTournamentStatus, updateTournament } from "@/app/actions/tournaments";
 import { PlayerChip } from "@/components/MatchRow";
 import { LockSimple } from "@phosphor-icons/react";
+import { isoToColombiaInput } from "@/lib/datetime";
 
 export default function Settings() {
   const { id, snapshot, viewer, refresh } = useT();
@@ -25,7 +25,7 @@ export default function Settings() {
       {beforeDraw ? (
         <div className="card">
           <TournamentForm
-            initial={{ name: t.name, starts_at: fmt(new Date(t.starts_at), "yyyy-MM-dd'T'HH:mm"), platform: t.platform, format: t.format, max_players: t.max_players, rules: t.rules, settings: t.settings }}
+            initial={{ name: t.name, starts_at: isoToColombiaInput(t.starts_at), platform: t.platform, format: t.format, max_players: t.max_players, rules: t.rules, settings: t.settings }}
             submitLabel="Guardar cambios"
             onSubmit={async (v) => { const r = await updateTournament(id, v); if (!r.ok) return r.error; toast.show("success", "Ajustes guardados"); await refresh(); return null; }}
           />

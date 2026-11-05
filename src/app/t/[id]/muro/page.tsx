@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useT } from "@/components/TournamentShell";
-import { Avatar, Emoji3D, EmptyState, RemoteImage, useToast } from "@/components/ui/primitives";
+import { ActionButton, Avatar, Emoji3D, EmptyState, RemoteImage, useToast } from "@/components/ui/primitives";
 import { createPost, deletePost, toggleReaction } from "@/app/actions/social";
 import { REACTION_EMOJI, postInputSchema } from "@/lib/schemas";
 import { REACTION_IMAGES } from "@/lib/avatars";
@@ -83,7 +83,7 @@ export default function Wall() {
             return (
               <li key={p.id} className="card space-y-3 animate-slideUp">
                 <div className="flex items-center gap-2"><Avatar name={author?.display_name ?? "?"} color={author?.avatar_color} size={32} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{author?.nickname || author?.display_name}</p><p className="text-xs text-white/50">{formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: es })}</p></div>
-                  {(viewer.isOrganizer || p.author_participant_id === viewer.participantId) && <button className="btn-ghost !min-h-9 !px-2 text-xs" onClick={async () => { if (!window.confirm("¿Eliminar esta publicación?")) return; const r = await deletePost(id, p.id); if (!r.ok) toast.show("error", r.error); else await refresh(); }}>Eliminar</button>}
+                  {(viewer.isOrganizer || p.author_participant_id === viewer.participantId) && <ActionButton className="btn-ghost !min-h-9 !px-2 text-xs" confirm="¿Eliminar esta publicación?" onAction={async () => { const r = await deletePost(id, p.id); if (!r.ok) toast.show("error", r.error); else await refresh(); }}>Eliminar</ActionButton>}
                 </div>
                 <p className="whitespace-pre-wrap break-words">{p.body}</p>
                 {p.image_url ? <RemoteImage src={p.image_url} alt="Imagen compartida" className="max-h-80 w-full rounded-xl object-cover" /> : null}

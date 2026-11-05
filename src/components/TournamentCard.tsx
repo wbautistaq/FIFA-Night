@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
 import { CalendarBlank, CaretRight, UsersThree } from "@phosphor-icons/react/dist/ssr";
+import { LocalDateTime } from "@/components/LocalDateTime";
 import { FORMAT_LABEL, STATUS_LABEL, PLATFORM_LABEL } from "@/lib/labels";
 import type { Tournament } from "@/lib/types";
 
@@ -23,7 +22,7 @@ export function TournamentCard({ t, players }: { t: Pick<Tournament, "id" | "nam
         <span className={`chip shrink-0 ${STATUS_STYLE[t.status] ?? ""}`}>{STATUS_LABEL[t.status]}</span>
       </div>
       <div className="mt-3 flex items-center gap-4 pl-1 text-xs text-white/65">
-        <span className="inline-flex items-center gap-1"><CalendarBlank size={14} aria-hidden />{format(new Date(t.starts_at), "EEE d MMM, HH:mm", { locale: es })}</span>
+        <span className="inline-flex items-center gap-1"><CalendarBlank size={14} aria-hidden /><LocalDateTime iso={t.starts_at} /></span>
         {players !== undefined ? <span className="inline-flex items-center gap-1"><UsersThree size={14} aria-hidden />{players} jugadores</span> : null}
         <CaretRight size={16} className="ml-auto text-white/40 transition group-hover:translate-x-0.5 group-hover:text-neon" aria-hidden />
       </div>

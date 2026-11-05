@@ -1,11 +1,12 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { format as fmt } from "date-fns";
+import { DateTimeField } from "@/components/DateTimeField";
 import { Field, Toggle, useToast } from "@/components/ui/primitives";
 import { tournamentInputSchema, type TournamentInput } from "@/lib/schemas";
 import { DEFAULT_SETTINGS } from "@/lib/engine/types";
 import { FORMAT_LABEL, PLATFORM_LABEL } from "@/lib/labels";
+import { colombiaInputToIso, defaultStartInput } from "@/lib/datetime";
 
 const FORMAT_HELP: Record<TournamentInput["format"], string> = {
   league: "Todos juegan contra todos una vez. Gana quien más puntos sume.",
@@ -18,10 +19,7 @@ const FORMAT_HELP: Record<TournamentInput["format"], string> = {
 };
 
 export function defaultTournamentInput(): TournamentInput {
-  const d = new Date();
-  d.setDate(d.getDate() + 1);
-  d.setHours(20, 0, 0, 0);
-  return { name: "", starts_at: fmt(d, "yyyy-MM-dd'T'HH:mm"), platform: "presencial", format: "league", max_players: 8, rules: "", settings: DEFAULT_SETTINGS };
+  return { name: "", starts_at: defaultStartInput(), platform: "presencial", format: "league", max_players: 8, rules: "", settings: DEFAULT_SETTINGS };
 }
 
 export function TournamentForm({ initial, submitLabel, onSubmit, lockFormat }: { initial: TournamentInput; submitLabel: string; onSubmit: (v: TournamentInput) => Promise<string | null>; lockFormat?: boolean }) {
@@ -48,7 +46,7 @@ export function TournamentForm({ initial, submitLabel, onSubmit, lockFormat }: {
     if (!parsed.success) return;
     setBusy(true);
     setServerError(null);
-    const message = await onSubmit(parsed.data);
+    const message = await onSubmit({ ...parsed.data, starts_at: colombiaInputToIso(parsed.data.starts_at) });
     setBusy(false);
     if (message) {
       setServerError(message);
@@ -66,7 +64,7 @@ export function TournamentForm({ initial, submitLabel, onSubmit, lockFormat }: {
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Fecha y hora" htmlFor="starts" error={err("starts_at")}>
-          <input id="starts" type="datetime-local" className="input" value={v.starts_at} onChange={(e) => set("starts_at", e.target.value)} onBlur={touch("starts_at")} />
+          <DateTimeField id="starts" defaultValue={v.starts_at} onChange={(value) => set("starts_at", value)} onBlur={touch("starts_at")} />
         </Field>
         <Field label="Máximo de jugadores" htmlFor="max" error={err("max_players")} help="Entre 4 y 32">
           <input id="max" type="number" inputMode="numeric" min={4} max={32} className="input" value={v.max_players} onChange={(e) => set("max_players", Number(e.target.value))} onBlur={touch("max_players")} />

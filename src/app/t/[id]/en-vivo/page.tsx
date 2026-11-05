@@ -11,10 +11,11 @@ import { ActionButton, EmptyState, Toggle, useToast } from "@/components/ui/prim
 import { buildLiveBoard, playerTurn, type QueueMatch } from "@/lib/engine/queue";
 import { callMatch, setStations, uncallMatch } from "@/app/actions/live";
 import { startMatch } from "@/app/actions/results";
+import { formatTime } from "@/lib/datetime";
 
 const AUTO_KEY = (id: string) => `fn_autopilot_${id}`;
 const minutesAgo = (iso: string | null) => (iso ? Math.max(0, Math.round((Date.now() - Date.parse(iso)) / 60000)) : 0);
-const clock = (minutes: number) => new Date(Date.now() + minutes * 60000).toLocaleTimeString("es", { hour: "numeric", minute: "2-digit" });
+const clock = (minutes: number) => formatTime(Date.now() + minutes * 60000);
 
 function Versus({ m }: { m: QueueMatch }) {
   return (

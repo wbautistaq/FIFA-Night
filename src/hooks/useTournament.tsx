@@ -3,6 +3,7 @@
 import { useEffect, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/browser";
+import { playerName } from "@/lib/names";
 import { effectiveTeams } from "@/lib/teams";
 import type { AppNotification, Snapshot, Viewer } from "@/lib/types";
 
@@ -54,7 +55,12 @@ export function useTournament(id: string) {
     };
   }, [kind, id, qc]);
 
-  const data = query.data;
+  // Dentro del torneo cada jugador se muestra siempre igual: con su apodo si lo tiene
+  const data = useMemo(() => {
+    const raw = query.data;
+    if (!raw) return undefined;
+    return { ...raw, snapshot: { ...raw.snapshot, participants: raw.snapshot.participants.map((p) => ({ ...p, display_name: playerName(p) })) } };
+  }, [query.data]);
   const derived = useMemo(() => {
     if (!data) return null;
     const { snapshot } = data;

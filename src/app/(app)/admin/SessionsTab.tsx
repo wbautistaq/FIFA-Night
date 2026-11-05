@@ -6,6 +6,7 @@ import { Desktop, DeviceMobile, DeviceTablet, Question, type Icon } from "@phosp
 import { ActionButton, EmptyState, Toggle } from "@/components/ui/primitives";
 import { ONLINE_WINDOW_MS, type Device } from "@/lib/device";
 import type { AdminSession } from "@/app/actions/admin";
+import { formatFullDateTime } from "@/lib/datetime";
 
 const DEVICE_ICON: Record<Device["kind"], Icon> = { phone: DeviceMobile, tablet: DeviceTablet, desktop: Desktop, unknown: Question };
 
@@ -18,7 +19,7 @@ function ago(iso: string) {
   const d = Math.round(h / 24);
   return `hace ${d} ${d === 1 ? "día" : "días"}`;
 }
-const when = (iso: string) => new Date(iso).toLocaleString("es", { dateStyle: "short", timeStyle: "short" });
+const when = (iso: string) => formatFullDateTime(iso);
 
 /** Sesiones abiertas agrupadas por usuario, con opción de cerrar un dispositivo concreto o todos. */
 export function SessionsTab({ sessions, onRevokeOne, onRevokeAll }: {

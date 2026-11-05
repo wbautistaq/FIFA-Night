@@ -9,6 +9,7 @@ import { StandingsTable } from "@/components/StandingsTable";
 import { PlayerChip } from "@/components/MatchRow";
 import { stageLabel } from "@/lib/labels";
 import { ArrowsOut, SignOut, Trophy } from "@phosphor-icons/react";
+import { formatTime } from "@/lib/datetime";
 
 const ORDER = ["next", "standings", "bracket", "scorers", "results"] as const;
 type View = (typeof ORDER)[number];
@@ -30,7 +31,7 @@ export default function TvMode() {
     return () => clearInterval(timer);
   }, [remote, available.length]);
   useEffect(() => {
-    const tick = () => setClock(new Date().toLocaleTimeString("es", { hour: "2-digit", minute: "2-digit" }));
+    const tick = () => setClock(formatTime(new Date()));
     tick();
     const timer = setInterval(tick, 20000);
     return () => clearInterval(timer);

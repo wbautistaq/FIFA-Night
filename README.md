@@ -24,7 +24,7 @@ supabase status         # copia API URL, anon key y service_role key
 2. Aplica las migraciones en orden (`supabase db push` con la CLI enlazada, o pega cada archivo de `supabase/migrations/` en el SQL Editor).
 3. Ejecuta `supabase/seed.sql` (82 equipos ficticios/genéricos).
 4. **Authentication → URL Configuration**: Site URL = tu URL pública; Redirect URLs = `https://TU-DOMINIO/auth/callback` y `http://localhost:3000/auth/callback`.
-5. **Authentication → Providers**: Email (magic link) viene activo; Google es opcional (configura Client ID/Secret).
+5. **Authentication → Providers**: Email (contraseña o código por correo) es el único acceso activo.
 6. El bucket `fifa-night` (avatares y fotos del muro, 2 MB, JPG/PNG/WebP) se crea en la migración 3; si Storage no está disponible la app usa avatares con iniciales.
 
 > Torneo demo opcional: `psql "$DATABASE_URL" -v owner_email=tu@correo.com -f supabase/demo.sql` (tras iniciar sesión una vez).

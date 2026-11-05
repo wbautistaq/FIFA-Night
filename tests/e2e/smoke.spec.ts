@@ -15,7 +15,6 @@ test("login valida el correo en tiempo real", async ({ page }) => {
   await email.blur();
   await expect(page.getByText("Escribe un correo válido")).toBeVisible();
   await expect(page.getByRole("button", { name: "Enviarme el enlace" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Continuar con Google" })).toBeVisible();
 });
 
 test("manifest PWA válido con íconos", async ({ request }) => {

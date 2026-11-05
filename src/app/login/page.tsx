@@ -80,14 +80,6 @@ function LoginForm() {
     window.location.assign(safeNext);
   }
 
-  async function google() {
-    const { error } = await createClient().auth.signInWithOAuth({ provider: "google", options: { redirectTo: redirectTo() } });
-    if (error) {
-      setState("error");
-      setMessage("Google no está configurado en este proyecto. Usa el enlace por correo.");
-    }
-  }
-
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5 py-10">
       <header className="text-center">
@@ -144,8 +136,6 @@ function LoginForm() {
           </form>
         )}
         {state === "error" ? <p role="alert" className="error-text">{message}</p> : null}
-        <div className="flex items-center gap-3 text-xs text-white/50"><span className="h-px flex-1 bg-white/10" />o<span className="h-px flex-1 bg-white/10" /></div>
-        <button className="btn-secondary w-full" onClick={google} type="button">Continuar con Google</button>
       </section>
       <p className="text-center text-sm text-white/60">¿Te invitaron a un torneo? Abre el link o escanea el QR que te compartieron: no necesitas cuenta.</p>
     </main>

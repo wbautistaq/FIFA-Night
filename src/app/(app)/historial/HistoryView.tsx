@@ -74,7 +74,7 @@ export function HistoryView({ me, tournaments, participants, matches, results }:
                   </div>
                   <div className="flex flex-wrap items-center gap-2 text-xs">
                     {r.tag ? <span className={clsx("chip", TAG[r.tag].className)}>{r.tag === "nemesis" ? <Skull size={14} weight="fill" aria-hidden /> : r.tag === "victim" ? <Target size={14} weight="fill" aria-hidden /> : <Sword size={14} weight="fill" aria-hidden />}{TAG[r.tag].label}</span> : null}
-                    {r.streak.who ? <span className="chip !normal-case">{r.streak.who === "a" ? <Fire size={14} weight="fill" className="text-orange-400" aria-hidden /> : <Snowflake size={14} weight="fill" className="text-sky-300" aria-hidden />}{r.streak.who === "a" ? `Ganas ${r.streak.length} seguidas` : `Pierdes ${r.streak.length} seguidas`}</span> : null}
+                    {r.streak.who ? <span className="chip !normal-case">{r.streak.who === "a" ? <Fire size={14} weight="fill" className="text-orange-400" aria-hidden /> : <Snowflake size={14} weight="fill" className="text-sky-300" aria-hidden />}{r.streak.who === "a" ? `${r.streak.length} ${r.streak.length === 1 ? "victoria seguida" : "victorias seguidas"}` : `${r.streak.length} ${r.streak.length === 1 ? "derrota seguida" : "derrotas seguidas"}`}</span> : null}
                     <span className="text-white/60">Goles {r.aGoals}-{r.bGoals}</span>
                   </div>
                 </li>
@@ -137,7 +137,7 @@ export function HistoryView({ me, tournaments, participants, matches, results }:
               </div>
               <p className="text-center text-sm text-white/70">Goles: {h2h.aGoals} - {h2h.bGoals}</p>
               {h2h.biggest && <p className="text-center text-sm">Mayor goleada: <strong>{h2h.biggest.winner === "a" ? nameOf(a) : nameOf(b)}</strong> {h2h.biggest.winner === "a" ? `${h2h.biggest.aScore}-${h2h.biggest.bScore}` : `${h2h.biggest.bScore}-${h2h.biggest.aScore}`}</p>}
-              {h2h.streak.who && <p className="text-center text-sm">Racha vigente: {h2h.streak.who === "a" ? nameOf(a) : nameOf(b)} ({h2h.streak.length} seguidas)</p>}
+              {h2h.streak.who && <p className="text-center text-sm">Racha vigente: {h2h.streak.who === "a" ? nameOf(a) : nameOf(b)} ({h2h.streak.length} {h2h.streak.length === 1 ? "seguida" : "seguidas"})</p>}
               <ul className="space-y-1" aria-label="Últimos enfrentamientos">{h2h.last.map((g) => <li key={g.matchId} className="flex justify-between rounded-lg bg-white/5 px-3 py-2 text-sm"><span className="truncate text-white/70">{g.tournament}</span><span className="font-display tabular-nums">{g.aScore} - {g.bScore}</span></li>)}</ul>
             </div>
           ))}

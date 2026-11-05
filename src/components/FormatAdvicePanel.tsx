@@ -12,16 +12,18 @@ const duration = (min: number) => (min < 60 ? `${min} min` : `${Math.floor(min /
  * Opciones para armar los cruces según cuántos juegan: qué implica cada formato con ese número
  * (descansos, pases libres, partidos por persona, duración) y cuál conviene.
  */
-export function FormatAdvicePanel({ players, selected, stations = 1, formats, onPick, busy = false }: {
+export function FormatAdvicePanel({ players, selected, stations = 1, formats, thirdPlace = false, onPick, busy = false }: {
   players: number;
   /** Id de la opción elegida (league, groups, cup…). */
   selected: string | null;
   stations?: number;
   formats?: readonly TournamentFormat[];
+  /** Suma el partido por el tercer puesto a la estimación. */
+  thirdPlace?: boolean;
   onPick: (option: FormatOption) => void;
   busy?: boolean;
 }) {
-  const advice = useMemo(() => formatAdvice(players, { stations, formats }), [players, stations, formats]);
+  const advice = useMemo(() => formatAdvice(players, { stations, formats, thirdPlace }), [players, stations, formats, thirdPlace]);
   const [all, setAll] = useState(false);
 
   if (advice.options.length === 0) {

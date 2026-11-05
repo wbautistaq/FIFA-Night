@@ -64,3 +64,14 @@ describe("formatAdvice", () => {
     expect(two.minutes).toBeLessThan(one.minutes);
   });
 });
+
+describe("formatAdvice con tercer puesto", () => {
+  it("cuenta el partido adicional en grupos y copa", () => {
+    const base = formatAdvice(8).options;
+    const third = formatAdvice(8, { thirdPlace: true }).options;
+    const of = (list: typeof base, id: string) => list.find((o) => o.id === id)?.matches;
+    expect(of(base, "groups")).toBe(15);
+    expect(of(third, "groups")).toBe(16);
+    expect(of(third, "cup")).toBe((of(base, "cup") ?? 0) + 1);
+  });
+});

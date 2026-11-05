@@ -107,7 +107,7 @@ export default function Overview() {
       {viewer.isOrganizer && ["draft", "registration", "draw"].includes(t.status) && participants.length >= 4 && (
         <section className="card space-y-3" aria-labelledby="fmt-h">
           <h2 id="fmt-h" className="section-title">Cómo armar los cruces</h2>
-          <FormatAdvicePanel players={participants.length} stations={t.stations ?? 1} busy={formatBusy}
+          <FormatAdvicePanel players={participants.length} stations={t.stations ?? 1} thirdPlace={t.settings.third_place} busy={formatBusy}
             selected={FORMAT_OPTION_ID[t.format] ?? null}
             onPick={async (o) => {
               if (FORMAT_OPTION_ID[t.format] === o.id && o.format !== "groups_playoffs") return;

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { errorMessage, fail, ok, requireActor, type ActionResult } from "@/lib/actor";
 
 const uuid = z.string().uuid();
+const MIN_PLAYERS = 4;
 const assignmentsSchema = z.array(z.object({ participantId: uuid, teamId: uuid })).min(1);
 
 export async function saveDraw(tournamentId: string, assignments: unknown): Promise<ActionResult> {
@@ -25,6 +26,10 @@ export async function saveDraw(tournamentId: string, assignments: unknown): Prom
 export async function confirmDraw(tournamentId: string): Promise<ActionResult> {
   try {
     const actor = await requireActor(uuid.parse(tournamentId));
+    // El sorteo confirmado cierra la inscripción: con menos jugadores el torneo quedaría sin poder iniciar
+    const { count, error: countError } = await actor.client.from("tournament_participants").select("id", { count: "exact", head: true }).eq("tournament_id", tournamentId);
+    if (countError) throw countError;
+    if ((count ?? 0) < MIN_PLAYERS) return fail(`Necesitas al menos ${MIN_PLAYERS} jugadores para confirmar el sorteo`);
     const { error } = await actor.client.rpc("confirm_draw", { p_tournament: tournamentId });
     if (error) throw error;
     return ok();

@@ -54,7 +54,7 @@ export default function Stats() {
         </div>
       )}
       {played && tab === "goleadores" && (
-        <ol className="space-y-2">{scorers.map((s, i) => <li key={s.participant_id} className="card flex items-center gap-3 !p-3"><span className="w-6 text-center font-black text-neon">{i + 1}</span><div className="min-w-0 flex-1"><PlayerChip participantId={s.participant_id} /></div><span className="text-2xl font-black tabular-nums">{s.goals_for}</span><span className="text-xs text-white/60">goles</span></li>)}</ol>
+        <ol className="space-y-2">{scorers.map((s, i) => <li key={s.participant_id} className="card flex items-center gap-3 !p-3"><span className="w-6 text-center font-black text-neon">{i + 1}</span><div className="min-w-0 flex-1"><PlayerChip participantId={s.participant_id} /></div><span className="text-2xl font-black tabular-nums">{s.goals_for}</span><span className="text-xs text-white/60">{s.goals_for === 1 ? "gol" : "goles"}</span></li>)}</ol>
       )}
       {tab === "logros" && (achievements.length === 0 ? <EmptyState icon={Medal} title="Los logros se reparten al terminar el torneo" /> : (
         <ul className="grid gap-2 sm:grid-cols-2">

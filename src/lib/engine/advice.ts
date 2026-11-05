@@ -60,7 +60,7 @@ export function bestGroups(players: number): { groupSize: number; qualifiers: nu
  * Opciones de formato para N jugadores, pensadas sobre todo para cantidades impares o que no
  * llenan un cuadro: cuántos partidos son, quién descansa o pasa directo y cuánto dura la noche.
  */
-export function formatAdvice(players: number, opts: { stations?: number; matchMinutes?: number; formats?: readonly TournamentFormat[] } = {}): FormatAdvice {
+export function formatAdvice(players: number, opts: { stations?: number; matchMinutes?: number; formats?: readonly TournamentFormat[]; thirdPlace?: boolean } = {}): FormatAdvice {
   const n = Math.floor(players);
   const stations = Math.max(1, opts.stations ?? 1);
   const per = opts.matchMinutes ?? 12;
@@ -96,7 +96,7 @@ export function formatAdvice(players: number, opts: { stations?: number; matchMi
     const g = bestGroups(n);
     if (g) {
       const qual = g.sizes.length * g.qualifiers;
-      const m = g.sizes.reduce((acc, s) => acc + pairs(s), 0) + qual - 1;
+      const m = g.sizes.reduce((acc, s) => acc + pairs(s), 0) + qual - 1 + (opts.thirdPlace && qual >= 4 ? 1 : 0);
       const sizesText = [...new Set(g.sizes)].sort((a, b) => b - a).join(" y ");
       options.push({
         id: "groups", format: "groups_playoffs", settings: { group_size: g.groupSize, qualifiers_per_group: g.qualifiers },
@@ -115,6 +115,7 @@ export function formatAdvice(players: number, opts: { stations?: number; matchMi
   if (allowed("cup")) {
     const size = Math.max(4, nextPow2(n));
     const byes = size - n;
+    const cupMatches = n - 1 + (opts.thirdPlace ? 1 : 0);
     options.push({
       id: "cup", format: "cup", settings: {}, title: "Copa (eliminación directa)",
       summary: byes ? `${plural(byes, "jugador pasa", "jugadores pasan")} directo a la 2ª ronda` : `Cuadro exacto de ${size}`,
@@ -123,7 +124,7 @@ export function formatAdvice(players: number, opts: { stations?: number; matchMi
         "El que pierde queda fuera: la noche más corta",
         byes > n / 3 ? "Muchos pases libres: varios jugarán solo 1 partido" : "Cada eliminado juega al menos 1 partido",
       ],
-      matches: n - 1, minPerPlayer: byes ? 0 : 1, minutes: time(n - 1), recommended: false,
+      matches: cupMatches, minPerPlayer: byes ? 0 : 1, minutes: time(cupMatches), recommended: false,
     });
   }
 

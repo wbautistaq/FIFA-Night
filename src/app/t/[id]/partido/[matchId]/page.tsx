@@ -56,9 +56,10 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
 
   const done = async (r: { ok: boolean; error?: string }, msg: string) => {
     if (!r.ok) return toast.show("error", r.error ?? "Error");
-    toast.show("success", msg);
-    setCorrecting(false);
+    // Primero se recargan los datos: así Calendario y Tabla ya están al día cuando el usuario ve el aviso
     await refresh();
+    setCorrecting(false);
+    toast.show("success", msg);
   };
 
   const participantsOpt = [match.home_id, match.away_id].filter(Boolean) as string[];
@@ -77,7 +78,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
           {match.mvp_id ? <p className="mt-2 inline-flex items-center gap-1 text-sm"><Star size={16} weight="fill" className="text-amber-300" aria-hidden />MVP: {derived.participants.get(match.mvp_id)?.display_name}</p> : null}
           <div className="mt-3 flex flex-wrap justify-center gap-2">
             <ShareButton fileName="resultado-fifa-night" text={`${derived.participants.get(match.home_id ?? "")?.display_name ?? ""} ${existing?.home_score}-${existing?.away_score} ${derived.participants.get(match.away_id ?? "")?.display_name ?? ""} ⚽`} card={<ResultCard match={match} />} />
-            {viewer.isOrganizer && <button className="btn-secondary" onClick={() => setCorrecting(true)}>Corregir resultado</button>}
+            {canOfficial && <button className="btn-secondary" onClick={() => setCorrecting(true)}>Corregir resultado</button>}
           </div>
         </div>
       )}

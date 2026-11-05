@@ -34,7 +34,7 @@ export async function createTournament(input: TournamentInput): Promise<ActionRe
     await supabase.from("tournament_participants").insert({
       tournament_id: data.id,
       user_id: user.id,
-      display_name: profile?.display_name ?? "Organizador",
+      display_name: profile?.nickname || profile?.display_name || "Organizador",
       nickname: profile?.nickname ?? null,
       platform: profile?.platform ?? parsed.platform,
       gamer_id: profile?.gamer_id ?? null,
@@ -106,7 +106,7 @@ export async function duplicateTournament(id: string, name: string): Promise<Act
     const newId = data as string;
     const { data: me } = await supabase.auth.getUser();
     const { data: profile } = await supabase.from("profiles").select("display_name,nickname,platform,gamer_id,avatar_url").eq("id", me.user?.id ?? "").maybeSingle();
-    await supabase.from("tournament_participants").insert({ tournament_id: newId, user_id: me.user?.id, display_name: profile?.display_name ?? "Organizador", avatar_url: profile?.avatar_url ?? null, role: "coorganizer", avatar_color: "#3dff7a" });
+    await supabase.from("tournament_participants").insert({ tournament_id: newId, user_id: me.user?.id, display_name: profile?.nickname || profile?.display_name || "Organizador", nickname: profile?.nickname ?? null, avatar_url: profile?.avatar_url ?? null, role: "coorganizer", avatar_color: "#3dff7a" });
     await supabase.from("invitations").insert({ tournament_id: newId, created_by: me.user?.id });
     await supabase.from("tournaments").update({ status: "registration" }).eq("id", newId);
     revalidatePath("/");

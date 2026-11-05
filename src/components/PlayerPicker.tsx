@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import clsx from "clsx";
 import { CheckCircle, MagnifyingGlass, Plus, UserCircleDashed, X } from "@phosphor-icons/react";
 import { Avatar } from "@/components/ui/primitives";
@@ -36,6 +36,9 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
   // Estado del texto como nombre de invitado: ¿es mi apodo o el de otra cuenta?
   const [nameStatus, setNameStatus] = useState<{ name: string; status: GuestNameStatus } | null>(null);
   const [guestError, setGuestError] = useState<string | null>(null);
+  // La comprobación de invitados es asíncrona: al terminar se parte de la lista más reciente, no de la de cuando empezó
+  const latest = useRef(value);
+  useEffect(() => { latest.current = value; }, [value]);
 
   useEffect(() => { myPlayers().then((r) => setFriends(r.ok ? (r.data ?? []) : [])); }, []);
 
@@ -74,7 +77,7 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
     const names = raw.split(/[,\n]/).map((n) => n.trim()).filter((n) => n.length > 0 && n.length <= 40);
     // Cada nombre se comprueba en el servidor: un invitado nunca puede llevar el apodo de una cuenta (ni el tuyo)
     const checks = await Promise.all(names.map((n) => guestNameStatus(n)));
-    const next = [...value];
+    const next = [...latest.current];
     const problems: string[] = [];
     names.forEach((n, i) => {
       const st = checks[i];
@@ -83,6 +86,7 @@ export function PlayerPicker({ value, onChange, allowGuests = true, excludeUserI
       if (max !== undefined && next.length >= max) return;
       if (!next.some((p) => normName(p.name) === normName(n)) && !excludeNames?.has(normName(n))) next.push({ kind: "guest", name: n });
     });
+    latest.current = next;
     onChange(next);
     setGuestError(problems.length ? problems.join(" ") : null);
     if (!problems.length) setQuery("");

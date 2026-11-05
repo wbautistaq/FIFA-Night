@@ -50,9 +50,9 @@ export default function Invite() {
       const r = await addParticipant(id, { display_name: name, platform: "presencial" });
       if (!r.ok) return toast.show("error", `${name}: ${r.error}`);
     }
+    await refresh();
     toast.show("success", toAdd.length === 1 ? "Jugador agregado" : `${toAdd.length} jugadores agregados`);
     setToAdd([]);
-    await refresh();
   }
   const message = `¡Te invito a "${t.name}" en FIFA Night! Únete aquí: ${link}`;
 

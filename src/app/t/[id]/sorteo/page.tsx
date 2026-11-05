@@ -162,7 +162,7 @@ export default function Draw() {
           {viewer.isOrganizer && !t.draw_confirmed && !animating && (
             <div className="flex gap-2">
               {proposal && <button className="btn-secondary flex-1" onClick={run}>Repetir</button>}
-              <ActionButton className="btn-primary flex-1" confirm="Al confirmar, el sorteo queda bloqueado. ¿Continuar?" onAction={confirm}>Confirmar sorteo</ActionButton>
+              <ActionButton className="btn-primary flex-1" disabled={participants.length < 4} title={participants.length < 4 ? "Necesitas al menos 4 jugadores" : undefined} confirm="Al confirmar, el sorteo queda bloqueado y ya no podrás agregar jugadores. ¿Continuar?" onAction={confirm}>Confirmar sorteo</ActionButton>
             </div>
           )}
         </section>

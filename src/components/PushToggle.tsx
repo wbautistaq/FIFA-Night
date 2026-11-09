@@ -62,7 +62,7 @@ export function PushToggle({ tournamentId }: { tournamentId: string }) {
         {state === "off" && <p><b>Avísame cuando me toque</b><span className="block text-white/60">Llega aunque tengas la app cerrada.</span></p>}
         {state === "busy" && <p className="text-white/60">Comprobando avisos…</p>}
         {state === "denied" && <p className="text-white/70">Bloqueaste los avisos. Actívalos en los ajustes del navegador para este sitio.</p>}
-        {state === "ios-install" && <p className="text-white/70">En iPhone: toca <b>Compartir → Agregar a inicio</b>, abre FIFA Night desde ahí y activa los avisos.</p>}
+        {state === "ios-install" && <p className="text-white/70">En iPhone: toca <b>Compartir → Agregar a inicio</b>, abre Copa del Parche desde ahí y activa los avisos.</p>}
       </div>
       {state === "off" && <button className="btn-primary !min-h-11 shrink-0 !px-4 text-sm" onClick={enable}>Activar</button>}
       {toast.node}

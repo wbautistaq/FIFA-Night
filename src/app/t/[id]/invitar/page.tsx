@@ -54,7 +54,7 @@ export default function Invite() {
     toast.show("success", toAdd.length === 1 ? "Jugador agregado" : `${toAdd.length} jugadores agregados`);
     setToAdd([]);
   }
-  const message = `¡Te invito a "${t.name}" en FIFA Night! Únete aquí: ${link}`;
+  const message = `¡Te invito a "${t.name}" en Copa del Parche! Únete aquí: ${link}`;
 
   async function copy() {
     try {
@@ -94,7 +94,7 @@ export default function Invite() {
                 <div className="grid grid-cols-3 gap-2">
                   <button className="btn-secondary !px-2" onClick={copy}>Copiar</button>
                   <a className="btn-secondary !px-2" target="_blank" rel="noopener noreferrer" href={`https://wa.me/?text=${encodeURIComponent(message)}`}>WhatsApp</a>
-                  <a className="btn-secondary !px-2" target="_blank" rel="noopener noreferrer" href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`Únete a "${t.name}" en FIFA Night`)}`}>Telegram</a>
+                  <a className="btn-secondary !px-2" target="_blank" rel="noopener noreferrer" href={`https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent(`Únete a "${t.name}" en Copa del Parche`)}`}>Telegram</a>
                 </div>
               </div>
             </div>

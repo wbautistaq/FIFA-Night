@@ -8,11 +8,11 @@ import { getSiteAppearance } from "@/lib/site-appearance";
 import { themeInfo } from "@/lib/themes";
 
 export const metadata: Metadata = {
-  title: { default: "FIFA Night", template: "%s · FIFA Night" },
-  description: "Organiza torneos de FIFA / EA SPORTS FC entre amigos: sorteo, fixtures, tablas, bracket y modo TV.",
+  title: { default: "Copa del Parche", template: "%s · Copa del Parche" },
+  description: "Organiza torneos de fútbol en consola con tu parche: sorteo, fixtures, tablas, bracket y modo TV.",
   manifest: "/manifest.webmanifest",
-  applicationName: "FIFA Night",
-  appleWebApp: { capable: true, title: "FIFA Night", statusBarStyle: "black-translucent" },
+  applicationName: "Copa del Parche",
+  appleWebApp: { capable: true, title: "Copa del Parche", statusBarStyle: "black-translucent" },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/icon-192.png" },
 };
 

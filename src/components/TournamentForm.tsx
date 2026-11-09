@@ -101,7 +101,7 @@ export function TournamentForm({ initial, submitLabel, onSubmit, lockFormat }: {
         {isKnockout && <Toggle id="third" label="Partido por el tercer puesto" checked={v.settings.third_place} onChange={(x) => setS({ third_place: x })} />}
         <Toggle id="pen" label="Penales si hay empate (eliminatorias)" checked={v.settings.penalties} onChange={(x) => setS({ penalties: x })} help="En llaves un empate siempre se define por penales" />
         <Toggle id="rep" label="Los jugadores reportan sus resultados" checked={v.settings.player_reporting} onChange={(x) => setS({ player_reporting: x })} help="El rival debe confirmarlos; si no coinciden, decides tú" />
-        <Toggle id="fp" label="FIFA Points y logros" checked={v.settings.fifa_points} onChange={(x) => setS({ fifa_points: x })} />
+        <Toggle id="fp" label="Puntos del Parche y logros" checked={v.settings.fifa_points} onChange={(x) => setS({ fifa_points: x })} />
         <Toggle id="pred" label="Predicciones" checked={v.settings.predictions} onChange={(x) => setS({ predictions: x })} help="Los espectadores suman puntos por acertar" />
         {v.settings.predictions && <Toggle id="exact" label="Puntos extra por marcador exacto" checked={v.settings.exact_score_predictions} onChange={(x) => setS({ exact_score_predictions: x })} />}
         <Toggle id="wall" label="Muro del torneo" checked={v.settings.wall} onChange={(x) => setS({ wall: x })} />

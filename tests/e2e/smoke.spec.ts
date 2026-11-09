@@ -21,7 +21,7 @@ test("manifest PWA válido con íconos", async ({ request }) => {
   const res = await request.get("/manifest.webmanifest");
   expect(res.ok()).toBeTruthy();
   const m = await res.json();
-  expect(m).toMatchObject({ name: "FIFA Night", display: "standalone", lang: "es" });
+  expect(m).toMatchObject({ name: "Copa del Parche", display: "standalone", lang: "es" });
   expect(m.icons.map((i: { sizes: string }) => i.sizes)).toEqual(expect.arrayContaining(["192x192", "512x512"]));
   for (const icon of m.icons) expect((await request.get(icon.src)).ok()).toBeTruthy();
 });

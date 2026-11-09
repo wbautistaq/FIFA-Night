@@ -14,7 +14,7 @@ export async function guestNameConflict(names: string[], who: "organizer" | "sel
     if (data) {
       return who === "self"
         ? `«${name}» es el apodo de un jugador con cuenta. Si eres tú, entra con tu cuenta; si no, usa otro nombre.`
-        : `«${name}» ya tiene cuenta en FIFA Night: agrégalo buscándolo por su apodo, no como invitado.`;
+        : `«${name}» ya tiene cuenta en Copa del Parche: agrégalo buscándolo por su apodo, no como invitado.`;
     }
   }
   return null;

@@ -105,7 +105,7 @@ export function MatchExtras({ match }: { match: Match }) {
               );
             })}
           </div>
-          <p className="help !mt-0">{viewer.participantId ? (myVote ? "Toca de nuevo para quitar tu voto." : "Vota al mejor del partido (no puedes votarte a ti mismo).") : "Solo los participantes del torneo pueden votar."} El más votado se lleva el MVP y +3 FIFA Points.</p>
+          <p className="help !mt-0">{viewer.participantId ? (myVote ? "Toca de nuevo para quitar tu voto." : "Vota al mejor del partido (no puedes votarte a ti mismo).") : "Solo los participantes del torneo pueden votar."} El más votado se lleva el MVP y +3 Puntos del Parche.</p>
         </section>
       ) : null}
       {toast.node}

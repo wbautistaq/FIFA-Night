@@ -1,4 +1,4 @@
-# FIFA Night 🏆⚽
+# Copa del Parche (antes FIFA Night)
 
 PWA mobile-first para organizar torneos privados de FIFA / EA SPORTS FC entre amigos: invitaciones por link/QR, sorteo de equipos con animación, fixtures automáticos (liga, ida y vuelta, copa, doble eliminación, grupos + playoffs, amistosos), resultados con confirmación del rival, tabla y bracket en tiempo real, estadísticas, historial cara a cara, muro, predicciones, FIFA Points, logros y Modo TV.
 

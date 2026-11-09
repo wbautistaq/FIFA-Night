@@ -37,9 +37,9 @@ export default async function Home() {
     <div className="space-y-8">
       <header className="card-glow relative overflow-hidden">
         <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full glow-blob blur-3xl" aria-hidden />
-        <p className="eyebrow">FIFA Night · FC 27</p>
+        <p className="eyebrow">Copa del Parche</p>
         <h1 className="mt-1 text-3xl uppercase leading-tight">Hola, <span className="bg-gradient-to-r from-neon to-volt-light bg-clip-text text-transparent">{profile?.nickname || profile?.display_name || "crack"}</span></h1>
-        <p className="mt-1 text-sm text-white/70">Arma la noche de FIFA: sorteo, calendario y tabla en vivo.</p>
+        <p className="mt-1 text-sm text-white/70">Arma el torneo del parche: sorteo, calendario y tabla en vivo.</p>
         <div className="mt-4 grid gap-2 sm:flex">
           <Link href="/torneos/rapido" className="btn-primary"><Lightning size={20} weight="fill" aria-hidden />Torneo relámpago</Link>
           <Link href="/torneos/nuevo" className="btn-secondary"><Plus size={20} weight="bold" aria-hidden />Torneo personalizado</Link>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { CheckCircle, Trash } from "@phosphor-icons/react/dist/ssr";
 import { SUPPORT_EMAIL } from "@/lib/site";
 
-export const metadata = { title: "Eliminar cuenta", description: "Cómo eliminar tu cuenta de FIFA Night y qué datos se borran." };
+export const metadata = { title: "Eliminar cuenta", description: "Cómo eliminar tu cuenta de Copa del Parche y qué datos se borran." };
 
 /** Página pública (sin iniciar sesión) que Google Play exige para pedir el borrado de la cuenta. */
 export default async function DeleteAccountInfo({ searchParams }: { searchParams: Promise<{ hecho?: string }> }) {
@@ -13,7 +13,7 @@ export default async function DeleteAccountInfo({ searchParams }: { searchParams
       {hecho ? (
         <div role="status" className="card flex items-start gap-3 border-neon/50">
           <CheckCircle size={28} weight="fill" className="shrink-0 text-neon" aria-hidden />
-          <p>Tu cuenta y tus datos personales fueron eliminados. Gracias por jugar en FIFA Night.</p>
+          <p>Tu cuenta y tus datos personales fueron eliminados. Gracias por jugar en Copa del Parche.</p>
         </div>
       ) : null}
       <div className="flex items-center gap-3">
@@ -24,7 +24,7 @@ export default async function DeleteAccountInfo({ searchParams }: { searchParams
       <section className="card space-y-2">
         <h2 className="text-lg uppercase">Desde la app</h2>
         <ol className="list-decimal space-y-1 pl-5 text-white/85">
-          <li>Inicia sesión en FIFA Night.</li>
+          <li>Inicia sesión en Copa del Parche.</li>
           <li>Abre <b>Perfil</b>.</li>
           <li>Al final, toca <b>Eliminar mi cuenta</b>, revisa qué pasará con tus torneos y escribe ELIMINAR.</li>
         </ol>

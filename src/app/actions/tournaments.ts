@@ -348,7 +348,7 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
     if (conflict) return fail(conflict);
 
     const created = await createTournament({
-      name: q.name || `Noche FIFA ${formatDayMonth(new Date())}`,
+      name: q.name || `Noche del Parche ${formatDayMonth(new Date())}`,
       starts_at: new Date().toISOString(),
       platform: "presencial",
       format: q.format,

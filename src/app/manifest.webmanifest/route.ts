@@ -4,9 +4,9 @@ export function GET() {
   return Response.json(
     {
       id: "/",
-      name: "FIFA Night",
-      short_name: "FIFA Night",
-      description: "Torneos de FIFA / EA SPORTS FC entre amigos",
+      name: "Copa del Parche",
+      short_name: "Copa Parche",
+      description: "Torneos de fútbol en consola con tu parche",
       start_url: "/",
       scope: "/",
       display: "standalone",

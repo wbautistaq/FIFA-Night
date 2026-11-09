@@ -87,8 +87,8 @@ function LoginForm() {
         <span className="mx-auto grid h-20 w-20 place-items-center icon-tile rounded-3xl" aria-hidden>
           <Trophy size={44} weight="duotone" />
         </span>
-        <h1 className="mt-4 text-5xl uppercase leading-none">FIFA <span className="bg-gradient-to-r from-neon via-volt-light to-blaze-light bg-clip-text text-transparent">Night</span></h1>
-        <p className="mt-3 text-white/75">Torneos de EA SPORTS FC 27 entre amigos, en un minuto.</p>
+        <h1 className="mt-4 text-5xl uppercase leading-none">Copa del <span className="bg-gradient-to-r from-neon via-volt-light to-blaze-light bg-clip-text text-transparent">Parche</span></h1>
+        <p className="mt-3 text-white/75">Torneos de fútbol en consola con tu parche, en un minuto.</p>
       </header>
       <section className="card-glow space-y-4" aria-labelledby="login-title">
         <h2 id="login-title" className="text-lg uppercase">Entrar</h2>
@@ -121,7 +121,7 @@ function LoginForm() {
             <Field label="Correo electrónico" htmlFor="email2" error={emailError}>
               <input id="email2" type="email" inputMode="email" autoComplete="email" className="input" value={email} onChange={(e) => setEmail(e.target.value)} onBlur={() => setTouched(true)} aria-invalid={Boolean(emailError)} />
             </Field>
-            <Field label="Código del correo" htmlFor="code" help="Son los números que aparecen en el correo de FIFA Night.">
+            <Field label="Código del correo" htmlFor="code" help="Son los números que aparecen en el correo de Copa del Parche.">
               <input id="code" inputMode="numeric" autoComplete="one-time-code" pattern="\d*" maxLength={8} className="input text-center font-display text-2xl tracking-[.4em]" placeholder="••••••" value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))} autoFocus />
             </Field>
             <button className="btn-primary w-full" disabled={verifying || code.length < 6}>{verifying ? "Entrando…" : "Entrar con el código"}</button>
@@ -140,7 +140,7 @@ function LoginForm() {
       </section>
       <p className="text-center text-sm text-white/60">¿Te invitaron a un torneo? Abre el link o escanea el QR que te compartieron: no necesitas cuenta.</p>
       <p className="text-center text-xs text-white/55">
-        Al usar FIFA Night aceptas nuestra <Link href="/privacidad" className="underline hover:text-white">política de privacidad</Link>.
+        Al usar Copa del Parche aceptas nuestra <Link href="/privacidad" className="underline hover:text-white">política de privacidad</Link>.
       </p>
     </main>
   );

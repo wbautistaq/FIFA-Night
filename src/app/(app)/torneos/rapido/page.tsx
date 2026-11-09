@@ -74,7 +74,7 @@ export default function QuickTournamentPage() {
       <header>
         <p className="eyebrow flex items-center gap-1"><Lightning size={14} weight="fill" aria-hidden />En 30 segundos</p>
         <h1 className="text-3xl uppercase">Torneo relámpago</h1>
-        <p className="mt-1 text-sm text-white/70">Elige quién juega y listo: sorteamos equipos de FC 27, armamos el calendario y arranca. Busca a tus amigos por su apodo; quien no tenga cuenta entra como invitado.</p>
+        <p className="mt-1 text-sm text-white/70">Elige quién juega y listo: sorteamos los equipos, armamos el calendario y arranca. Busca a tus amigos por su apodo; quien no tenga cuenta entra como invitado.</p>
       </header>
 
       <section className="card space-y-3" aria-labelledby="qp">
@@ -110,7 +110,7 @@ export default function QuickTournamentPage() {
         </div>
         <Toggle id="q-bal" label="Equipos parejos" help="Equipos con estrellas parecidas para todos" checked={balanced} onChange={setBalanced} />
         <Field label="Nombre del torneo (opcional)" htmlFor="q-name">
-          <input id="q-name" className="input" placeholder="Noche FIFA" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
+          <input id="q-name" className="input" placeholder="Noche del Parche" value={name} onChange={(e) => setName(e.target.value)} maxLength={80} />
         </Field>
       </section>
 

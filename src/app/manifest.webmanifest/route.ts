@@ -4,7 +4,7 @@ export function GET() {
   return Response.json(
     {
       id: "/",
-      name: "Copa del Parche",
+      name: "Copa Parche",
       short_name: "Copa Parche",
       description: "Torneos de fútbol en consola con tu parche",
       start_url: "/",

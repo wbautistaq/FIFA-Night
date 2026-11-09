@@ -25,9 +25,9 @@ self.addEventListener("fetch", (e) => {
 // Avisos push ("te toca jugar"). El servidor manda { title, body, url, tag }.
 self.addEventListener("push", (e) => {
   let data = {};
-  try { data = e.data ? e.data.json() : {}; } catch { data = { title: "Copa del Parche", body: e.data ? e.data.text() : "" }; }
+  try { data = e.data ? e.data.json() : {}; } catch { data = { title: "Copa Parche", body: e.data ? e.data.text() : "" }; }
   const url = typeof data.url === "string" && data.url.startsWith("/") ? data.url : "/";
-  e.waitUntil(self.registration.showNotification(data.title || "Copa del Parche", {
+  e.waitUntil(self.registration.showNotification(data.title || "Copa Parche", {
     body: data.body || "",
     icon: "/icons/icon-192.png",
     badge: "/icons/icon-192.png",

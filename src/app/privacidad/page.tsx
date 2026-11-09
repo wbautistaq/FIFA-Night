@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { PRIVACY_UPDATED, SUPPORT_EMAIL } from "@/lib/site";
 
-export const metadata = { title: "Política de privacidad", description: "Qué datos recoge Copa del Parche, para qué los usa y cómo ejercer tus derechos." };
+export const metadata = { title: "Política de privacidad", description: "Qué datos recoge Copa Parche, para qué los usa y cómo ejercer tus derechos." };
 
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -29,13 +29,13 @@ export default function PrivacyPolicy() {
       </div>
 
       <p className="text-white/85">
-        Copa del Parche es una aplicación para organizar torneos de fútbol en consola entre amigos. Aquí explicamos qué datos
+        Copa Parche es una aplicación para organizar torneos de fútbol en consola entre amigos. Aquí explicamos qué datos
         recogemos, para qué los usamos, con quién los compartimos y cómo puedes consultarlos, corregirlos o borrarlos.
         Tratamos los datos conforme a la Ley 1581 de 2012 de Colombia y sus decretos reglamentarios.
       </p>
 
       <Section title="1. Responsable y contacto">
-        <p>El responsable del tratamiento es Copa del Parche, con domicilio en Bogotá, Colombia. Para cualquier consulta sobre tus datos escríbenos a {mail}.</p>
+        <p>El responsable del tratamiento es Copa Parche, con domicilio en Bogotá, Colombia. Para cualquier consulta sobre tus datos escríbenos a {mail}.</p>
       </Section>
 
       <Section title="2. Qué datos recogemos">
@@ -102,7 +102,7 @@ export default function PrivacyPolicy() {
       </Section>
 
       <Section title="9. Menores de edad">
-        <p>Copa del Parche no está dirigida a menores de 13 años y no recogemos a sabiendas sus datos. Los menores de 18 deben usarla con autorización de su padre, madre o tutor. Si crees que un menor de 13 años nos dio datos, escríbenos y los borraremos.</p>
+        <p>Copa Parche no está dirigida a menores de 13 años y no recogemos a sabiendas sus datos. Los menores de 18 deben usarla con autorización de su padre, madre o tutor. Si crees que un menor de 13 años nos dio datos, escríbenos y los borraremos.</p>
       </Section>
 
       <Section title="10. Cambios a esta política">

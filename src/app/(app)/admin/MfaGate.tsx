@@ -28,7 +28,7 @@ export function MfaGate() {
       if (verified) return setStep({ kind: "verify", factorId: verified.id });
       // Un registro a medias (QR generado pero nunca confirmado) bloquearía uno nuevo
       for (const f of data.all.filter((f) => f.status === "unverified")) await mfa.unenroll({ factorId: f.id });
-      const enrolled = await mfa.enroll({ factorType: "totp", friendlyName: "Copa del Parche admin" });
+      const enrolled = await mfa.enroll({ factorType: "totp", friendlyName: "Copa Parche admin" });
       if (enrolled.error) return setStep({ kind: "error", text: "No se pudo iniciar el registro. Revisa que MFA (TOTP) esté activo en Supabase." });
       setStep({ kind: "enroll", factorId: enrolled.data.id, qr: enrolled.data.totp.qr_code, secret: enrolled.data.totp.secret });
     })();

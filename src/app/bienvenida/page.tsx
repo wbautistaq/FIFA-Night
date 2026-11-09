@@ -56,7 +56,7 @@ export default function Onboarding() {
             <Field label="Tu nombre" htmlFor="name" error={form.display_name && !nameOk ? "Escribe tu nombre" : undefined}>
               <input id="name" className="input" value={form.display_name} onChange={(e) => setForm({ ...form, display_name: e.target.value })} autoComplete="name" />
             </Field>
-            <Field label="Apodo" htmlFor="nick" help={nickOk ? "Disponible ✓ Así te encuentran tus amigos para agregarte a sus torneos" : "Único en Copa del Parche: así te encuentran tus amigos para agregarte a sus torneos"}
+            <Field label="Apodo" htmlFor="nick" help={nickOk ? "Disponible ✓ Así te encuentran tus amigos para agregarte a sus torneos" : "Único en Copa Parche: así te encuentran tus amigos para agregarte a sus torneos"}
               error={form.nickname && !nickFormat.success ? nickFormat.error.issues[0]?.message : nickState && nickState.value === form.nickname.trim() && !nickState.ok ? nickState.message : undefined}>
               <input id="nick" className="input" value={form.nickname} maxLength={20} autoCapitalize="off" onChange={(e) => setForm({ ...form, nickname: e.target.value })} />
             </Field>
@@ -85,7 +85,7 @@ export default function Onboarding() {
             <h1 className="text-2xl font-bold">¡Todo listo, {form.nickname || form.display_name}!</h1>
             <p className="text-white/70">Crea tu primer torneo o únete con el link que te pasen tus amigos.</p>
             {error ? <p role="alert" className="error-text">{error}</p> : null}
-            <div className="flex gap-2"><button className="btn-ghost" onClick={() => setStep(2)}>Atrás</button><button className="btn-primary flex-1" onClick={finish}>Entrar a Copa del Parche</button></div>
+            <div className="flex gap-2"><button className="btn-ghost" onClick={() => setStep(2)}>Atrás</button><button className="btn-primary flex-1" onClick={finish}>Entrar a Copa Parche</button></div>
           </>
         )}
       </section>

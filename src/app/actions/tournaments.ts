@@ -192,7 +192,7 @@ export async function setCoorganizer(tournamentId: string, participantId: string
     const { supabase, user } = await requireUser();
     const { data: t } = await supabase.from("tournaments").select("owner_id").eq("id", uuid.parse(tournamentId)).maybeSingle();
     if (t?.owner_id !== user.id) return fail("Solo el dueño puede nombrar coorganizadores");
-    const { error } = await supabase.from("tournament_participants").update({ role: on ? "coorganizer" : "player" }).eq("id", uuid.parse(participantId));
+    const { error } = await supabase.from("tournament_participants").update({ role: on ? "coorganizer" : "player" }).eq("id", uuid.parse(participantId)).eq("tournament_id", tournamentId);
     if (error) throw error;
     return ok();
   } catch (e) {
@@ -407,5 +407,33 @@ export async function quickTournament(input: QuickTournamentInput): Promise<Acti
     if (e instanceof z.ZodError) return fail(e.issues[0]?.message ?? "Datos inválidos");
     const msg = e instanceof DrawError ? e.message : errorMessage(e);
     return fail(createdId ? `El torneo se creó pero no se pudo completar: ${msg}` : msg);
+  }
+}
+
+/**
+ * El dueño entrega el torneo a un coorganizador con cuenta. Así el torneo no depende de una sola persona
+ * (por ejemplo, si el dueño quiere borrar su cuenta). El dueño anterior queda como coorganizador.
+ */
+export async function transferOwnership(tournamentId: string, participantId: string): Promise<ActionResult> {
+  try {
+    const tid = uuid.parse(tournamentId);
+    const pid = uuid.parse(participantId);
+    const { supabase, user } = await requireUser();
+    const { data: t } = await supabase.from("tournaments").select("owner_id,name").eq("id", tid).maybeSingle();
+    if (!t || t.owner_id !== user.id) return fail("Solo el dueño puede entregar el torneo");
+    const db = createAdminClient();
+    const { data: target } = await db.from("tournament_participants").select("id,user_id,role").eq("id", pid).eq("tournament_id", tid).maybeSingle();
+    if (!target?.user_id) return fail("Solo se puede entregar a un jugador que entró con cuenta");
+    if (target.user_id === user.id) return fail("Ya eres el dueño");
+    if (target.role !== "coorganizer") return fail("Primero nómbralo coorganizador");
+    // El cambio de dueño solo lo permite la clave de servicio (el trigger lo bloquea para todos los demás)
+    const upd = await db.from("tournaments").update({ owner_id: target.user_id }).eq("id", tid).eq("owner_id", user.id);
+    if (upd.error) throw upd.error;
+    const keep = await db.from("tournament_participants").update({ role: "coorganizer" }).eq("tournament_id", tid).eq("user_id", user.id);
+    if (keep.error) throw keep.error;
+    revalidatePath(`/t/${tid}`);
+    return ok();
+  } catch (e) {
+    return fail(errorMessage(e));
   }
 }

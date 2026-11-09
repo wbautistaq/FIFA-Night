@@ -3,7 +3,7 @@
 import { z } from "zod";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { errorMessage, fail, ok, type ActionResult } from "@/lib/actor";
-import { audit, requireAdmin } from "@/lib/admin";
+import { audit, requireAdmin, requireStaff, staffRole, STAFF_ROLE_LABEL, type StaffRole } from "@/lib/admin";
 import { newAccessCode } from "@/lib/access-code";
 import { createAdminClient } from "@/lib/supabase/server";
 import { describeDevice, ONLINE_WINDOW_MS, type Device } from "@/lib/device";
@@ -19,7 +19,8 @@ export interface AdminUser {
   name: string | null;
   createdAt: string;
   lastSignIn: string | null;
-  isAdmin: boolean;
+  /** Rol en el equipo de la plataforma (null para jugadores). */
+  role: StaffRole | null;
   banned: boolean;
   mfa: boolean;
   tournamentsOwned: number;
@@ -62,6 +63,8 @@ export interface AdminSession {
 }
 
 export interface AdminOverview {
+  /** Rol de quien ve el panel: los moderadores reciben menos datos (sin correos, sesiones ni registro). */
+  viewerRole: StaffRole;
   users: AdminUser[];
   tournaments: AdminTournament[];
   log: AdminLogEntry[];
@@ -74,7 +77,8 @@ export interface AdminOverview {
 
 /** Datos del panel: usuarios, torneos, totales y las últimas acciones registradas. */
 export async function loadAdminOverview(): Promise<AdminOverview> {
-  const admin = await requireAdmin();
+  const admin = await requireStaff("moderator");
+  const full = admin.role === "admin";
   const db = createAdminClient();
   const [usersRes, profiles, tournaments, participants, matches, results, log, sessionsRes] = await Promise.all([
     db.auth.admin.listUsers({ page: 1, perPage: 500 }),
@@ -94,13 +98,14 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
   const ts = tournaments.data ?? [];
 
   return {
+    viewerRole: admin.role,
     users: usersRes.data.users.map((u) => ({
       id: u.id,
-      email: u.email ?? null,
+      email: full ? u.email ?? null : null,
       name: names.get(u.id) ?? null,
       createdAt: u.created_at,
       lastSignIn: u.last_sign_in_at ?? null,
-      isAdmin: (u.app_metadata as { role?: string } | undefined)?.role === "admin",
+      role: staffRole(u.app_metadata),
       banned: Boolean(u.banned_until && new Date(u.banned_until) > new Date()),
       mfa: (u.factors ?? []).some((f) => f.status === "verified"),
       tournamentsOwned: ts.filter((t) => t.owner_id === u.id).length,
@@ -115,7 +120,7 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
       players: count(participants.data as { tournament_id: string }[] | null, t.id as string),
       matches: count(matches.data as { tournament_id: string }[] | null, t.id as string),
     })),
-    log: (log.data ?? []).map((l) => ({
+    log: (full ? log.data ?? [] : []).map((l) => ({
       id: l.id as number,
       adminEmail: l.admin_email as string | null,
       action: l.action as string,
@@ -124,15 +129,15 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
       details: (l.details ?? {}) as Record<string, unknown>,
       createdAt: l.created_at as string,
     })),
-    sessions: sessionRows && sessionRows.map((s) => {
+    sessions: full && sessionRows ? sessionRows.map((s) => {
       const d = describeDevice(s.user_agent);
       return {
         id: s.session_id, userId: s.user_id, email: s.email, name: names.get(s.user_id) ?? null,
         createdAt: s.created_at, lastActiveAt: s.last_active_at, mfa: s.aal === "aal2",
         device: d.label, deviceKind: d.kind, current: s.session_id === admin.sessionId,
       };
-    }),
-    appearance: await readAppearance(db),
+    }) : null,
+    appearance: full ? await readAppearance(db) : null,
     totals: {
       users: usersRes.data.users.length,
       tournaments: ts.length,
@@ -142,6 +147,11 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
       onlineUsers: new Set((sessionRows ?? []).filter((s) => Date.now() - Date.parse(s.last_active_at) < ONLINE_WINDOW_MS).map((s) => s.user_id)).size,
     },
   };
+}
+
+async function isStaffMember(id: string) {
+  const { data } = await createAdminClient().auth.admin.getUserById(id);
+  return staffRole(data.user?.app_metadata) !== null;
 }
 
 async function userLabel(id: string) {
@@ -214,10 +224,11 @@ export async function adminRevokeSession(sessionId: string): Promise<ActionResul
 /** Bloquea (o desbloquea) la cuenta: no puede iniciar sesión ni renovar la que tenga abierta. */
 export async function adminSetBan(userId: string, banned: boolean): Promise<ActionResult> {
   try {
-    const admin = await requireAdmin();
+    const admin = await requireStaff("moderator");
     const id = uuid.parse(userId);
     if (id === admin.userId) return fail("No puedes bloquear tu propia cuenta");
     const db = createAdminClient();
+    if (await isStaffMember(id)) return fail("Es parte del equipo: primero quítale el rol en la pestaña Equipo");
     const { error } = await db.auth.admin.updateUserById(id, { ban_duration: banned ? "876000h" : "none" });
     if (error) throw error;
     if (banned) await db.rpc("admin_revoke_sessions", { p_user: id });
@@ -235,6 +246,7 @@ export async function adminDeleteUser(userId: string): Promise<ActionResult> {
     const admin = await requireAdmin();
     const id = uuid.parse(userId);
     if (id === admin.userId) return fail("No puedes eliminar tu propia cuenta");
+    if (await isStaffMember(id)) return fail("Es parte del equipo: primero quítale el rol en la pestaña Equipo");
     const db = createAdminClient();
     const { count } = await db.from("tournaments").select("id", { count: "exact", head: true }).eq("owner_id", id);
     if (count) return fail(`Organiza ${count} torneo(s). Elimínalos primero desde la pestaña Torneos.`);
@@ -259,7 +271,7 @@ async function tournamentName(id: string) {
 /** Cancela un torneo en curso o en inscripción (los datos se conservan). */
 export async function adminCancelTournament(tournamentId: string): Promise<ActionResult> {
   try {
-    const admin = await requireAdmin();
+    const admin = await requireStaff("moderator");
     const id = uuid.parse(tournamentId);
     const { error } = await createAdminClient().from("tournaments").update({ status: "cancelled" }).eq("id", id);
     if (error) throw error;
@@ -326,6 +338,53 @@ export async function adminSetTheme(theme: ThemeId): Promise<ActionResult> {
     revalidateTag(APPEARANCE_TAG);
     revalidatePath("/", "layout");
     return ok();
+  } catch (e) {
+    return fail(errorMessage(e));
+  }
+}
+
+const roleInput = z.enum(["admin", "moderator"]).nullable();
+
+/**
+ * Da, cambia o quita el rol de alguien del equipo. Nadie cambia su propio rol: así siempre queda
+ * al menos un administrador (quien hace el cambio) y nadie se queda fuera por error.
+ */
+export async function adminSetRole(userId: string, role: StaffRole | null): Promise<ActionResult> {
+  try {
+    const admin = await requireAdmin();
+    const id = uuid.parse(userId);
+    const next = roleInput.parse(role);
+    if (id === admin.userId) return fail("No puedes cambiar tu propio rol: pídeselo a otro administrador");
+    const db = createAdminClient();
+    const { data, error } = await db.auth.admin.getUserById(id);
+    if (error || !data.user) return fail("No se encontró la cuenta");
+    const before = staffRole(data.user.app_metadata);
+    if (before === next) return ok();
+    if (next && data.user.banned_until && new Date(data.user.banned_until) > new Date()) return fail("La cuenta está bloqueada: desbloquéala primero");
+    const upd = await db.auth.admin.updateUserById(id, { app_metadata: { role: next } });
+    if (upd.error) throw upd.error;
+    // Al bajar o quitar un rol se cierran sus sesiones para que el permiso deje de valer de inmediato
+    if (before && before !== next) await db.rpc("admin_revoke_sessions", { p_user: id });
+    await audit(admin, next ? (before ? "Cambió rol" : "Agregó al equipo") : "Quitó del equipo", "user", id, {
+      email: data.user.email ?? id, antes: before ? STAFF_ROLE_LABEL[before] : "Jugador", ahora: next ? STAFF_ROLE_LABEL[next] : "Jugador",
+    });
+    revalidatePath("/admin");
+    return ok();
+  } catch (e) {
+    return fail(errorMessage(e));
+  }
+}
+
+/** Agrega al equipo una cuenta existente, buscándola por correo. */
+export async function adminAddStaff(rawEmail: string, role: StaffRole): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+    const target = email.parse(rawEmail);
+    const { data, error } = await createAdminClient().auth.admin.listUsers({ page: 1, perPage: 1000 });
+    if (error) throw error;
+    const user = data.users.find((u) => u.email?.toLowerCase() === target);
+    if (!user) return fail("No hay ninguna cuenta con ese correo. Créala primero en la pestaña Usuarios.");
+    return adminSetRole(user.id, roleInput.parse(role));
   } catch (e) {
     return fail(errorMessage(e));
   }

@@ -17,7 +17,7 @@ export default function More() {
     { href: `${b}/invitar`, Icon: UserPlus, label: "Invitar jugadores", hint: "Link y código QR", show: viewer.isOrganizer || ["registration", "draft"].includes(status) },
     { href: `${b}/sorteo`, Icon: Shuffle, label: "Sorteo de equipos", hint: "Equipos de FC 27", show: true },
     { href: `${b}/predicciones`, Icon: Sparkle, label: "Predicciones", hint: "Adivina marcadores y suma puntos", show: snapshot.tournament.settings.predictions },
-    { href: `${b}/ajustes`, Icon: GearSix, label: "Ajustes del torneo", hint: "Reglas, coorganizadores y estado", show: viewer.isOrganizer },
+    { href: `${b}/ajustes`, Icon: GearSix, label: "Administrar torneo", hint: "Reglas, equipo organizador y estado", show: viewer.isOrganizer },
     { href: `${b}/notificaciones`, Icon: Bell, label: "Notificaciones", hint: "Resultados, sorteos y líderes", show: true },
   ].filter((i) => i.show);
   return (

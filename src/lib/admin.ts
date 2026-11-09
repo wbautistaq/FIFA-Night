@@ -1,8 +1,15 @@
 import "server-only";
 import { createAdminClient, createClient } from "@/lib/supabase/server";
+import { staffRole, type StaffRole } from "@/lib/staff";
+
+export { STAFF_ROLE_LABEL, staffRole, type StaffRole } from "@/lib/staff";
 
 export interface AdminState {
+  /** Rol en el equipo de la plataforma (null para jugadores). */
+  role: StaffRole | null;
   isAdmin: boolean;
+  /** Administrador o moderador: puede entrar al panel. */
+  isStaff: boolean;
   /** "aal2" cuando la sesión ya pasó la verificación en dos pasos. */
   aal: string | null;
   userId: string | null;
@@ -19,8 +26,11 @@ export async function adminState(): Promise<AdminState> {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   const claims = data?.claims as { sub?: string; email?: string; aal?: string; session_id?: string; app_metadata?: { role?: string } } | undefined;
+  const role = staffRole(claims?.app_metadata);
   return {
-    isAdmin: claims?.app_metadata?.role === "admin",
+    role,
+    isAdmin: role === "admin",
+    isStaff: role !== null,
     aal: claims?.aal ?? null,
     userId: claims?.sub ?? null,
     email: claims?.email ?? null,
@@ -29,18 +39,28 @@ export async function adminState(): Promise<AdminState> {
 }
 
 export interface AdminContext {
+  role: StaffRole;
   userId: string;
   email: string | null;
   sessionId: string | null;
 }
 
-/** Exige administrador con verificación en dos pasos completada. Úsalo al inicio de cada acción. */
-export async function requireAdmin(): Promise<AdminContext> {
+/**
+ * Exige un rol del equipo con verificación en dos pasos completada. Úsalo al inicio de cada acción.
+ * El rol se vuelve a leer de la base de datos: si se lo quitaron hace un momento, el token aún podría decir lo contrario.
+ */
+export async function requireStaff(min: StaffRole = "admin"): Promise<AdminContext> {
   const s = await adminState();
-  if (!s.isAdmin || !s.userId) throw new Error("No autorizado");
+  if (!s.isStaff || !s.userId) throw new Error("No autorizado");
   if (s.aal !== "aal2") throw new Error("Confirma tu código de verificación en dos pasos");
-  return { userId: s.userId, email: s.email, sessionId: s.sessionId };
+  const { data, error } = await createAdminClient().auth.admin.getUserById(s.userId);
+  const role = error ? null : staffRole(data.user?.app_metadata);
+  if (!role || (min === "admin" && role !== "admin")) throw new Error("No autorizado");
+  return { role, userId: s.userId, email: s.email, sessionId: s.sessionId };
 }
+
+/** Solo administradores. */
+export const requireAdmin = () => requireStaff("admin");
 
 /** Registra una acción de administración. Si el registro falla, la acción se considera fallida. */
 export async function audit(admin: AdminContext, action: string, targetType: "user" | "tournament" | "platform", targetId: string | null, details: Record<string, unknown> = {}) {

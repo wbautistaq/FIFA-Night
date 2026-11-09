@@ -20,7 +20,7 @@ export default async function ProfilePage() {
       <p className="text-sm text-white/60">{auth.user.email}</p>
       <ProfileForm profile={data as Profile} userId={auth.user.id} />
       <PasswordForm />
-      {(await adminState()).isAdmin && (
+      {(await adminState()).isStaff && (
         <Link href="/admin" className="btn-secondary w-full border-neon/40 text-neon"><ShieldCheck size={20} weight="duotone" aria-hidden /> Administración</Link>
       )}
       <form action="/auth/signout" method="post"><button className="btn-secondary w-full">Cerrar sesión</button></form>

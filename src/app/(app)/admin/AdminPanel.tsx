@@ -10,20 +10,26 @@ import type { TournamentFormat } from "@/lib/engine/types";
 import type { TournamentStatus } from "@/lib/types";
 import type { ActionResult } from "@/lib/actor";
 import {
-  adminCancelTournament, adminCreateUser, adminDeleteTournament, adminDeleteUser, adminGenerateAccessCode,
-  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetTheme, adminSetBan, type AdminOverview, type AdminUser,
+  adminAddStaff, adminCancelTournament, adminCreateUser, adminDeleteTournament, adminDeleteUser, adminGenerateAccessCode,
+  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetBan, adminSetRole, adminSetTheme, type AdminOverview, type AdminUser,
 } from "@/app/actions/admin";
 import { SessionsTab } from "./SessionsTab";
 import { AppearanceTab } from "./AppearanceTab";
+import { TeamTab } from "./TeamTab";
+import type { StaffRole } from "@/lib/staff";
 import { formatFullDateTime } from "@/lib/datetime";
 
-const TABS = ["Resumen", "Usuarios", "Sesiones", "Torneos", "Apariencia", "Registro"] as const;
-type Tab = (typeof TABS)[number];
+const ADMIN_TABS = ["Resumen", "Usuarios", "Equipo", "Sesiones", "Torneos", "Apariencia", "Registro"] as const;
+const MODERATOR_TABS = ["Resumen", "Usuarios", "Torneos"] as const;
+type Tab = (typeof ADMIN_TABS)[number];
+const ROLE_LABEL: Record<StaffRole, string> = { admin: "Administrador", moderator: "Moderador" };
 
 const when = (iso: string | null) => (iso ? formatFullDateTime(iso) : "Nunca");
 
-/** Panel del creador de la plataforma. Cada acción se valida y registra en el servidor. */
+/** Panel del equipo de la plataforma. Cada acción se valida (rol + 2FA) y se registra en el servidor. */
 export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: string }) {
+  const isAdmin = data.viewerRole === "admin";
+  const tabs: readonly Tab[] = isAdmin ? ADMIN_TABS : MODERATOR_TABS;
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("Resumen");
@@ -67,10 +73,11 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
       <div className="flex items-center gap-3">
         <ShieldCheck size={30} weight="duotone" className="text-neon" aria-hidden />
         <h1 className="text-3xl uppercase">Administración</h1>
+        {!isAdmin && <span className="chip">Moderador</span>}
       </div>
 
       <div role="tablist" aria-label="Secciones" className="flex gap-1 overflow-x-auto rounded-xl bg-white/[.04] p-1">
-        {TABS.map((t) => (
+        {tabs.map((t) => (
           <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("min-h-11 flex-1 rounded-lg px-3 text-sm font-semibold transition", tab === t ? "bg-volt/30 text-white" : "text-white/65 hover:text-white")}>{t}</button>
         ))}
       </div>
@@ -96,7 +103,7 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
             ["En curso", data.totals.active],
             ["Partidos", data.totals.matches],
             ["Resultados", data.totals.results],
-            ["Acciones registradas", data.log.length],
+            ...(isAdmin ? [["Acciones registradas", data.log.length] as const] : []),
           ] as const).map(([label, n]) => (
             <div key={label} className="card text-center">
               <p className="tabular font-display text-3xl text-white">{n}</p>
@@ -110,6 +117,18 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
         <AppearanceTab appearance={data.appearance} onChange={async (theme) => { await run(adminSetTheme(theme), "Paleta aplicada a todo el sitio"); }} />
       )}
 
+      {tab === "Equipo" && isAdmin && (
+        <TeamTab users={data.users} selfId={selfId}
+          onAdd={async (email, role) => {
+            const r = await adminAddStaff(email, role);
+            if (!r.ok) return toast.show("error", r.error), false;
+            toast.show("success", `Agregado como ${ROLE_LABEL[role].toLowerCase()}. Verá el panel la próxima vez que entre.`);
+            router.refresh();
+            return true;
+          }}
+          onSetRole={async (u, role) => { await run(adminSetRole(u.id, role), role ? `Ahora es ${ROLE_LABEL[role].toLowerCase()}` : "Quitado del equipo"); }} />
+      )}
+
       {tab === "Sesiones" && (
         <SessionsTab sessions={data.sessions}
           onRevokeOne={async (s) => { await run(adminRevokeSession(s.id), "Sesión cerrada"); }}
@@ -118,16 +137,16 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
 
       {tab === "Usuarios" && (
         <div className="space-y-4">
-          <form onSubmit={create} className="card space-y-3" noValidate>
+          {isAdmin && <form onSubmit={create} className="card space-y-3" noValidate>
             <h2 className="flex items-center gap-2 text-lg uppercase"><UserPlus size={20} aria-hidden /> Crear cuenta</h2>
             <Field label="Correo" htmlFor="new-email" help="Se crea confirmada, sin enviar correo, con un código de acceso.">
               <input id="new-email" type="email" autoComplete="off" className="input" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
             </Field>
             <button className="btn-secondary w-full" disabled={creating || !newEmail.includes("@")}>{creating ? "Creando…" : "Crear y generar código"}</button>
-          </form>
+          </form>}
 
           <Field label="Buscar" htmlFor="user-q">
-            <input id="user-q" type="search" className="input" placeholder="Correo o nombre" value={query} onChange={(e) => setQuery(e.target.value)} />
+            <input id="user-q" type="search" className="input" placeholder={isAdmin ? "Correo o nombre" : "Nombre"} value={query} onChange={(e) => setQuery(e.target.value)} />
           </Field>
 
           {users.length === 0 ? <EmptyState title="Sin resultados" /> : (
@@ -140,7 +159,7 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
                       <p className="truncate font-semibold text-white">{u.name ?? "Sin nombre"} {self && <span className="text-white/50">(tú)</span>}</p>
                       <p className="break-all text-sm text-white/65">{u.email}</p>
                       <div className="mt-2 flex flex-wrap gap-1.5">
-                        {u.isAdmin && <span className="chip border-neon/50 text-neon">Admin</span>}
+                        {u.role && <span className="chip border-neon/50 text-neon">{ROLE_LABEL[u.role]}</span>}
                         {u.banned && <span className="chip-live">Bloqueado</span>}
                         {u.mfa && <span className="chip">2FA</span>}
                         <span className="chip">{u.tournamentsOwned} torneos</span>
@@ -148,15 +167,16 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
                       <p className="mt-2 text-xs text-white/50">Alta {when(u.createdAt)} · Último acceso {when(u.lastSignIn)}</p>
                     </div>
                     <div className="grid grid-cols-2 gap-2">
-                      <ActionButton className="btn-secondary !min-h-11 text-sm" onAction={() => genCode(u)} confirm={`¿Generar un código de acceso nuevo para ${u.email}? Reemplaza su contraseña actual.`}>Nuevo código</ActionButton>
-                      <ActionButton className="btn-secondary !min-h-11 text-sm" onAction={async () => { await run(adminRevokeSessions(u.id), (d) => `Sesiones cerradas: ${d?.sessions ?? 0}`); }} confirm={`¿Cerrar todas las sesiones de ${u.email}?`}>Cerrar sesiones</ActionButton>
-                      {!self && (
+                      {isAdmin && <ActionButton className="btn-secondary !min-h-11 text-sm" onAction={() => genCode(u)} confirm={`¿Generar un código de acceso nuevo para ${u.email}? Reemplaza su contraseña actual.`}>Nuevo código</ActionButton>}
+                      {isAdmin && <ActionButton className="btn-secondary !min-h-11 text-sm" onAction={async () => { await run(adminRevokeSessions(u.id), (d) => `Sesiones cerradas: ${d?.sessions ?? 0}`); }} confirm={`¿Cerrar todas las sesiones de ${u.email}?`}>Cerrar sesiones</ActionButton>}
+                      {!self && !u.role && (
                         <>
-                          <ActionButton className="btn-secondary !min-h-11 text-sm" onAction={() => run(adminSetBan(u.id, !u.banned), u.banned ? "Usuario desbloqueado" : "Usuario bloqueado")} confirm={u.banned ? `¿Desbloquear a ${u.email}?` : `¿Bloquear a ${u.email}? No podrá entrar hasta que lo desbloquees.`}>{u.banned ? "Desbloquear" : "Bloquear"}</ActionButton>
-                          <ActionButton className="btn-danger !min-h-11 text-sm" onAction={() => run(adminDeleteUser(u.id), "Usuario eliminado")} confirm={`¿Eliminar definitivamente la cuenta de ${u.email}? No se puede deshacer.`}>Eliminar</ActionButton>
+                          <ActionButton className="btn-secondary !min-h-11 text-sm" onAction={() => run(adminSetBan(u.id, !u.banned), u.banned ? "Usuario desbloqueado" : "Usuario bloqueado")} confirm={u.banned ? `¿Desbloquear a ${u.name ?? u.email}?` : `¿Bloquear a ${u.name ?? u.email}? No podrá entrar hasta que lo desbloquees.`}>{u.banned ? "Desbloquear" : "Bloquear"}</ActionButton>
+                          {isAdmin && <ActionButton className="btn-danger !min-h-11 text-sm" onAction={() => run(adminDeleteUser(u.id), "Usuario eliminado")} confirm={`¿Eliminar definitivamente la cuenta de ${u.email}? No se puede deshacer.`}>Eliminar</ActionButton>}
                         </>
                       )}
                     </div>
+                    {!self && u.role && <p className="help !mt-0">Es parte del equipo: su rol se gestiona en la pestaña Equipo.</p>}
                   </li>
                 );
               })}
@@ -174,10 +194,10 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
                 <p className="text-sm text-white/65">{FORMAT_LABEL[t.format as TournamentFormat] ?? t.format} · {t.players} jugadores · {t.matches} partidos</p>
                 <p className="text-xs text-white/50">{STATUS_LABEL[t.status as TournamentStatus] ?? t.status} · Organiza {t.ownerName ?? "—"} · {when(t.createdAt)}</p>
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <ActionButton className="btn-secondary !min-h-11 !px-2 text-sm" onAction={() => run(adminRecomputeTournament(t.id), "Tabla y estadísticas recalculadas")}>Recalcular</ActionButton>
+              <div className={clsx("grid gap-2", isAdmin ? "grid-cols-3" : "grid-cols-1")}>
+                {isAdmin && <ActionButton className="btn-secondary !min-h-11 !px-2 text-sm" onAction={() => run(adminRecomputeTournament(t.id), "Tabla y estadísticas recalculadas")}>Recalcular</ActionButton>}
                 <ActionButton className="btn-secondary !min-h-11 !px-2 text-sm" disabled={t.status === "cancelled" || t.status === "finished"} onAction={() => run(adminCancelTournament(t.id), "Torneo cancelado")} confirm={`¿Cancelar "${t.name}"?`}>Cancelar</ActionButton>
-                <ActionButton className="btn-danger !min-h-11 !px-2 text-sm" onAction={() => run(adminDeleteTournament(t.id), "Torneo eliminado")} confirm={`¿Eliminar "${t.name}" con todos sus partidos, fotos y comentarios? No se puede deshacer.`}>Eliminar</ActionButton>
+                {isAdmin && <ActionButton className="btn-danger !min-h-11 !px-2 text-sm" onAction={() => run(adminDeleteTournament(t.id), "Torneo eliminado")} confirm={`¿Eliminar "${t.name}" con todos sus partidos, fotos y comentarios? No se puede deshacer.`}>Eliminar</ActionButton>}
               </div>
             </li>
           ))}

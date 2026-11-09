@@ -27,6 +27,7 @@ export default async function ProfilePage() {
       <form action="/auth/signout" method="post"><button className="btn-secondary w-full">Cerrar sesión</button></form>
       <BlockedUsers />
       <DeleteAccount />
+      <p className="text-center text-xs text-white/55"><Link href="/privacidad" className="underline hover:text-white">Política de privacidad</Link> · <Link href="/eliminar-cuenta" className="underline hover:text-white">Cómo se elimina una cuenta</Link></p>
     </div>
   );
 }

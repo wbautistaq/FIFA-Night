@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { CheckCircle, Trash } from "@phosphor-icons/react/dist/ssr";
+import { SUPPORT_EMAIL } from "@/lib/site";
 
 export const metadata = { title: "Eliminar cuenta", description: "Cómo eliminar tu cuenta de FIFA Night y qué datos se borran." };
 
 /** Página pública (sin iniciar sesión) que Google Play exige para pedir el borrado de la cuenta. */
 export default async function DeleteAccountInfo({ searchParams }: { searchParams: Promise<{ hecho?: string }> }) {
   const { hecho } = await searchParams;
-  const support = process.env.NEXT_PUBLIC_SUPPORT_EMAIL;
+  const support = SUPPORT_EMAIL;
   return (
     <main id="main" className="mx-auto max-w-2xl space-y-5 px-4 py-8">
       {hecho ? (
@@ -40,7 +41,7 @@ export default async function DeleteAccountInfo({ searchParams }: { searchParams
         </ul>
         <h2 className="pt-2 text-lg uppercase">Qué se conserva</h2>
         <p>En torneos de otras personas tus partidos y resultados se mantienen para no dañar sus tablas, pero aparecen como «Jugador eliminado», sin tu nombre, foto ni ID de jugador. Los reportes de moderación se conservan sin datos de tu cuenta.</p>
-        <p>El borrado es inmediato y no se puede deshacer.</p>
+        <p>El borrado es inmediato y no se puede deshacer. Más detalles en la <Link href="/privacidad" className="font-semibold text-neon underline">política de privacidad</Link>.</p>
       </section>
 
       {support ? (

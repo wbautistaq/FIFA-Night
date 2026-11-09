@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
 import { z } from "zod";
@@ -138,6 +139,9 @@ function LoginForm() {
         {state === "error" ? <p role="alert" className="error-text">{message}</p> : null}
       </section>
       <p className="text-center text-sm text-white/60">¿Te invitaron a un torneo? Abre el link o escanea el QR que te compartieron: no necesitas cuenta.</p>
+      <p className="text-center text-xs text-white/55">
+        Al usar FIFA Night aceptas nuestra <Link href="/privacidad" className="underline hover:text-white">política de privacidad</Link>.
+      </p>
     </main>
   );
 }

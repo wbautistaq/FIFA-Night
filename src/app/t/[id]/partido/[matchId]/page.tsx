@@ -73,7 +73,7 @@ export default function MatchPage({ params }: { params: Promise<{ matchId: strin
       {status === "confirmed" && locked && (
         <div className="card text-center" role="status">
           <p className="eyebrow">Resultado final</p>
-          <p className="mt-1 font-display text-6xl tabular-nums drop-shadow-[0_0_18px_rgba(46,230,255,.35)]">{existing?.home_score}<span className="mx-2 text-white/40">–</span>{existing?.away_score}</p>
+          <p className="mt-1 font-display text-6xl tabular-nums drop-shadow-[0_0_18px_rgb(var(--accent)/.35)]">{existing?.home_score}<span className="mx-2 text-white/40">–</span>{existing?.away_score}</p>
           {existing?.home_pens != null && <p className="text-sm text-white/70">Penales: {existing.home_pens} - {existing.away_pens}</p>}
           {match.mvp_id ? <p className="mt-2 inline-flex items-center gap-1 text-sm"><Star size={16} weight="fill" className="text-amber-300" aria-hidden />MVP: {derived.participants.get(match.mvp_id)?.display_name}</p> : null}
           <div className="mt-3 flex flex-wrap justify-center gap-2">

@@ -32,7 +32,7 @@ export default function Stats() {
     <div className="space-y-5">
       <h2 className="section-title">Estadísticas</h2>
       <div role="tablist" aria-label="Estadísticas" className="flex gap-2 overflow-x-auto pb-1">
-        {tabs.filter((x) => x[2]).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "btn bg-neon !min-h-10 text-pitch-950" : "btn-secondary !min-h-10"} onClick={() => setTab(k)}>{l}</button>)}
+        {tabs.filter((x) => x[2]).map(([k, l]) => <button key={k} role="tab" aria-selected={tab === k} className={tab === k ? "btn bg-neon !min-h-10 text-onaccent" : "btn-secondary !min-h-10"} onClick={() => setTab(k)}>{l}</button>)}
       </div>
       {!played && tab !== "predictores" ? <EmptyState icon={ChartBar} title="Aún no hay partidos confirmados">Las estadísticas se llenan con cada resultado confirmado.</EmptyState> : null}
 

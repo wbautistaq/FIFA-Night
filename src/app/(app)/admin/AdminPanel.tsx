@@ -11,12 +11,13 @@ import type { TournamentStatus } from "@/lib/types";
 import type { ActionResult } from "@/lib/actor";
 import {
   adminCancelTournament, adminCreateUser, adminDeleteTournament, adminDeleteUser, adminGenerateAccessCode,
-  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetBan, type AdminOverview, type AdminUser,
+  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetAppearance, adminSetBan, type AdminOverview, type AdminUser,
 } from "@/app/actions/admin";
 import { SessionsTab } from "./SessionsTab";
+import { AppearanceTab } from "./AppearanceTab";
 import { formatFullDateTime } from "@/lib/datetime";
 
-const TABS = ["Resumen", "Usuarios", "Sesiones", "Torneos", "Registro"] as const;
+const TABS = ["Resumen", "Usuarios", "Sesiones", "Torneos", "Apariencia", "Registro"] as const;
 type Tab = (typeof TABS)[number];
 
 const when = (iso: string | null) => (iso ? formatFullDateTime(iso) : "Nunca");
@@ -103,6 +104,10 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
             </div>
           ))}
         </div>
+      )}
+
+      {tab === "Apariencia" && (
+        <AppearanceTab appearance={data.appearance} onChange={async (input) => { await run(adminSetAppearance(input), input.theme ? "Paleta aplicada a todo el sitio" : input.premium ? "Premium activado" : "Premium desactivado"); }} />
       )}
 
       {tab === "Sesiones" && (

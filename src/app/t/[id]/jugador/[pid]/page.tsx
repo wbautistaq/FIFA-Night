@@ -74,7 +74,7 @@ export default function PlayerPage({ params }: { params: Promise<{ pid: string }
         <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-neon/20 blur-3xl" aria-hidden />
         <div className="flex items-start justify-between">
           <div>
-            {rating !== null ? <p className="font-display text-5xl leading-none text-white drop-shadow-[0_0_12px_rgba(46,230,255,.6)]">{rating}</p> : null}
+            {rating !== null ? <p className="font-display text-5xl leading-none text-white drop-shadow-[0_0_12px_rgb(var(--accent)/.6)]">{rating}</p> : null}
             {rating !== null ? <p className="text-[11px] font-semibold uppercase tracking-widest text-neon">FIFA Points</p> : null}
             {isChampion ? <p className="mt-2 inline-flex items-center gap-1 rounded-full bg-amber-300/15 px-2 py-0.5 text-xs font-bold uppercase text-amber-200"><Crown size={14} weight="fill" aria-hidden />Campeón</p> : null}
           </div>

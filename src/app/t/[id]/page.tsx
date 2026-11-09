@@ -31,7 +31,7 @@ function Step({ n, done, label, children }: { n: number; done: boolean; label: s
   return (
     <li className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/20 p-2 pl-3">
       <span className="flex min-w-0 items-center gap-3">
-        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg font-display ${done ? "bg-neon text-pitch-950" : "bg-white/10 text-white/80"}`}>
+        <span className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg font-display ${done ? "bg-neon text-onaccent" : "bg-white/10 text-white/80"}`}>
           {done ? <CheckCircle size={18} weight="fill" aria-label="Hecho" /> : n}
         </span>
         <span className="min-w-0">{label}</span>

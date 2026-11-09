@@ -65,7 +65,7 @@ export function SessionsTab({ sessions, onRevokeOne, onRevokeAll }: {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="flex items-center gap-2 font-semibold text-white">
-                    <span className={clsx("h-2.5 w-2.5 shrink-0 rounded-full", g.online ? "bg-neon shadow-[0_0_8px_#2ee6ff]" : "bg-white/25")} aria-hidden />
+                    <span className={clsx("h-2.5 w-2.5 shrink-0 rounded-full", g.online ? "bg-neon shadow-[0_0_8px_rgb(var(--accent))]" : "bg-white/25")} aria-hidden />
                     <span className="truncate">{g.name ?? "Sin nombre"}</span>
                     <span className="sr-only">{g.online ? "(en línea)" : "(inactivo)"}</span>
                   </p>

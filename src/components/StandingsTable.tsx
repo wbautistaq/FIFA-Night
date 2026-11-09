@@ -34,7 +34,7 @@ export function StandingsTable({ rows, qualifiers = 0, large = false }: { rows: 
 
   const cell = large ? "px-3 py-3 text-xl" : "px-2 py-2.5 text-sm";
   // Podio: oro, plata y bronce marcados con color y número (no solo color)
-  const medal = (pos: number) => (pos === 1 ? "bg-amber-300 text-pitch-950 shadow-[0_0_12px_rgba(251,191,36,.6)]" : pos === 2 ? "bg-slate-300 text-pitch-950" : pos === 3 ? "bg-orange-400 text-pitch-950" : "bg-white/10 text-white/80");
+  const medal = (pos: number) => (pos === 1 ? "bg-[#fcd34d] text-[#111] shadow-[0_0_12px_rgba(251,191,36,.6)]" : pos === 2 ? "bg-[#cbd5e1] text-[#111]" : pos === 3 ? "bg-[#fb923c] text-[#111]" : "bg-white/10 text-white/80");
   return (
     <div className="card overflow-x-auto !p-0">
       <table className={clsx("w-full border-collapse", large && "min-w-[460px]")}>
@@ -49,7 +49,7 @@ export function StandingsTable({ rows, qualifiers = 0, large = false }: { rows: 
             const team = derived.teamOf(r.participant_id);
             const qualified = r.position <= qualifiers;
             return (
-              <tr key={r.participant_id} className={clsx("border-t border-white/5 transition", flash.has(r.participant_id) && "animate-flash", qualified && "bg-neon/[.06] shadow-[inset_3px_0_0_#2ee6ff]")}>
+              <tr key={r.participant_id} className={clsx("border-t border-white/5 transition", flash.has(r.participant_id) && "animate-flash", qualified && "bg-neon/[.06] shadow-[inset_3px_0_0_rgb(var(--accent))]")}>
                 <td className={cell}><span className={clsx("grid h-7 w-7 place-items-center rounded-lg font-display text-sm tabular-nums", medal(r.position))}>{r.position}</span></td>
                 <td className={cell}>
                   <div className="flex items-center gap-2">

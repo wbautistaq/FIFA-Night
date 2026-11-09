@@ -90,7 +90,7 @@ export function HistoryView({ me, tournaments, participants, matches, results }:
           <ol className="grid grid-cols-3 gap-2" aria-label="Podio del ranking Elo">
             {ranked.slice(0, 3).map((p, i) => (
               <li key={p.key} className={clsx("card flex flex-col items-center gap-1 !p-3 text-center", i === 0 && "border-amber-300/50 shadow-[0_0_24px_-8px_rgba(251,191,36,.6)]")}>
-                <span className={clsx("grid h-6 w-6 place-items-center rounded-md font-display text-xs text-pitch-950", i === 0 ? "bg-amber-300" : i === 1 ? "bg-slate-300" : "bg-orange-400")}>{i + 1}</span>
+                <span className={clsx("grid h-6 w-6 place-items-center rounded-md font-display text-xs text-[#111]", i === 0 ? "bg-[#fcd34d]" : i === 1 ? "bg-[#cbd5e1]" : "bg-[#fb923c]")}>{i + 1}</span>
                 {avatar(p.key, 44)}
                 <span className="w-full truncate text-sm font-bold">{p.name}</span>
                 <span className="font-display text-xl text-neon">{elo.get(p.key)?.rating ?? ELO_START}</span>
@@ -106,7 +106,7 @@ export function HistoryView({ me, tournaments, participants, matches, results }:
               <tbody>{ranked.map((p, i) => {
                 const e = elo.get(p.key);
                 return (
-                  <tr key={p.key} className={clsx("border-t border-white/5", p.key === myKey && "bg-neon/[.06] shadow-[inset_3px_0_0_#2ee6ff]")}>
+                  <tr key={p.key} className={clsx("border-t border-white/5", p.key === myKey && "bg-neon/[.06] shadow-[inset_3px_0_0_rgb(var(--accent))]")}>
                     <th scope="row" className="p-2 text-left font-semibold"><span className="flex items-center gap-2"><span className="w-4 text-center font-display text-white/50">{i + 1}</span>{avatar(p.key, 26)}<span className="truncate">{p.name}</span>{p.titles > 0 ? <Trophy size={14} weight="fill" className="text-amber-300" aria-label="Campeón" /> : null}</span></th>
                     <td className="p-2 text-center"><span className="font-display text-neon tabular-nums">{e?.rating ?? ELO_START}</span>{e?.lastChange ? <span className={clsx("ml-1 inline-flex items-center text-[11px] tabular-nums", e.lastChange > 0 ? "text-emerald-300" : "text-rose-300")}>{e.lastChange > 0 ? <CaretUp size={10} weight="fill" aria-label="subió" /> : <CaretDown size={10} weight="fill" aria-label="bajó" />}{Math.abs(e.lastChange)}</span> : null}</td>
                     {[e?.peak ?? ELO_START, p.tournaments, p.titles, p.played, p.won, p.drawn, p.lost, p.goalDifference, `${p.winRate}%`].map((v, j) => <td key={j} className="p-2 text-center tabular-nums">{v}</td>)}

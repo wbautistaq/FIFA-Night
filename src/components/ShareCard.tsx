@@ -31,7 +31,7 @@ export function ShareButton({ fileName, text, card, className = "btn-secondary",
     try {
       const { toBlob } = await import("html-to-image");
       await document.fonts.ready;
-      const blob = await toBlob(ref.current, { pixelRatio: 3, cacheBust: true, backgroundColor: "#07061a" });
+      const blob = await toBlob(ref.current, { pixelRatio: 3, cacheBust: true, backgroundColor: `rgb(${getComputedStyle(document.documentElement).getPropertyValue("--s950").trim()})` });
       if (!blob) throw new Error("sin imagen");
       const file = new File([blob], `${fileName}.png`, { type: "image/png" });
       if (navigator.canShare?.({ files: [file] })) {
@@ -68,7 +68,7 @@ function Frame({ eyebrow, children }: { eyebrow: string; children: ReactNode }) 
   const { snapshot } = useT();
   return (
     <div className="relative flex h-[450px] w-[360px] flex-col overflow-hidden bg-pitch-950 p-6 font-sans text-white"
-      style={{ backgroundImage: "radial-gradient(400px 260px at 0% 0%, rgba(139,92,246,.55), transparent 70%), radial-gradient(380px 260px at 100% 100%, rgba(244,63,94,.35), transparent 70%), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px)", backgroundSize: "auto, auto, 24px 24px, 24px 24px" }}>
+      style={{ backgroundImage: "radial-gradient(400px 260px at 0% 0%, rgb(var(--accent2)/.55), transparent 70%), radial-gradient(380px 260px at 100% 100%, rgb(var(--live)/.35), transparent 70%), linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px)", backgroundSize: "auto, auto, 24px 24px, 24px 24px" }}>
       <p className="font-display text-[11px] uppercase tracking-[.25em] text-neon">FIFA Night · FC 27</p>
       <p className="mt-1 truncate font-display text-lg uppercase leading-tight">{snapshot.tournament.name}</p>
       <p className="mt-4 font-display text-xs uppercase tracking-[.2em] text-white/60">{eyebrow}</p>
@@ -103,7 +103,7 @@ export function ResultCard({ match }: { match: Match }) {
       <div className="flex items-center justify-between">
         <Side participantId={match.home_id} />
         <div className="text-center">
-          <p className="font-display text-5xl tabular-nums drop-shadow-[0_0_18px_rgba(46,230,255,.5)]">{r?.home_score}<span className="mx-1 text-white/40">–</span>{r?.away_score}</p>
+          <p className="font-display text-5xl tabular-nums drop-shadow-[0_0_18px_rgb(var(--accent)/.5)]">{r?.home_score}<span className="mx-1 text-white/40">–</span>{r?.away_score}</p>
           {r?.home_pens != null ? <p className="mt-1 text-xs text-white/70">({r.home_pens}-{r.away_pens} pen.)</p> : null}
         </div>
         <Side participantId={match.away_id} />
@@ -123,7 +123,7 @@ export function StandingsCard({ rows, title = "Tabla de posiciones" }: { rows: S
           const team = derived.teamOf(r.participant_id);
           return (
             <li key={r.participant_id} className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[.06] px-3 py-1.5">
-              <span className={`grid h-6 w-6 place-items-center rounded-md font-display text-xs ${r.position === 1 ? "bg-amber-300 text-pitch-950" : r.position === 2 ? "bg-slate-300 text-pitch-950" : r.position === 3 ? "bg-orange-400 text-pitch-950" : "bg-white/10"}`}>{r.position}</span>
+              <span className={`grid h-6 w-6 place-items-center rounded-md font-display text-xs ${r.position === 1 ? "bg-[#fcd34d] text-[#111]" : r.position === 2 ? "bg-[#cbd5e1] text-[#111]" : r.position === 3 ? "bg-[#fb923c] text-[#111]" : "bg-white/10"}`}>{r.position}</span>
               {team ? <TeamCrest team={team} size={26} stars={false} /> : null}
               <span className="min-w-0 flex-1 truncate text-sm font-bold">{p?.nickname || p?.display_name}</span>
               <span className="text-[11px] text-white/60">{r.played} PJ</span>

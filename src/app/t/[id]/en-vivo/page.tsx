@@ -118,7 +118,7 @@ export default function LiveNight() {
         <h3 id="st-h" className="text-lg uppercase">Consolas</h3>
         <ul className="grid gap-3 sm:grid-cols-2">
           {board.stations.map((s) => (
-            <li key={s.station} className={clsx("card space-y-3", s.match?.status === "live" && "border-blaze/60 shadow-[0_0_24px_-6px_rgba(244,63,94,.6)]", s.match?.status === "pending" && "border-neon/50")}>
+            <li key={s.station} className={clsx("card space-y-3", s.match?.status === "live" && "border-blaze/60 shadow-[0_0_24px_-6px_rgb(var(--live)/.6)]", s.match?.status === "pending" && "border-neon/50")}>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-2 font-display text-lg uppercase"><GameController size={22} weight="duotone" className="text-volt-light" aria-hidden />Consola {s.station}</span>
                 {s.match ? (

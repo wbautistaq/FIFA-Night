@@ -86,7 +86,7 @@ export function TournamentShell({ id, children }: { id: string; children: ReactN
           </div>
           <Link href={`${base}/notificaciones`} className="btn-secondary relative !min-h-11 !w-11 !px-0" aria-label={`Notificaciones${unread ? `, ${unread} sin leer` : ""}`}>
             <Bell size={22} weight={unread ? "fill" : "regular"} aria-hidden />
-            {unread > 0 ? <span className="absolute -right-1.5 -top-1.5 min-w-5 rounded-full bg-blaze px-1.5 text-center text-xs font-bold leading-5 text-white shadow-[0_0_12px_rgba(244,63,94,.7)]">{unread}</span> : null}
+            {unread > 0 ? <span className="absolute -right-1.5 -top-1.5 min-w-5 rounded-full bg-blaze px-1.5 text-center text-xs font-bold leading-5 text-white shadow-[0_0_12px_rgb(var(--live)/.7)]">{unread}</span> : null}
           </Link>
         </header>
         {ctx.viewer.canClaim && ctx.viewer.participantId ? (
@@ -95,14 +95,14 @@ export function TournamentShell({ id, children }: { id: string; children: ReactN
         <main id="main">{children}</main>
         <TurnAlert tournamentId={id} participantId={ctx.viewer.participantId} matches={ctx.snapshot.matches} participants={ctx.derived.participants} teamOf={ctx.derived.teamOf} />
         <nav aria-label="Secciones del torneo" className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(env(safe-area-inset-bottom),.75rem)]">
-          <ul className="mx-auto flex max-w-2xl rounded-2xl border border-white/10 bg-pitch-900/85 p-1 shadow-[0_-8px_40px_-12px_rgba(139,92,246,.45)] backdrop-blur-xl">
+          <ul className="mx-auto flex max-w-2xl rounded-2xl border border-white/10 bg-pitch-900/85 p-1 shadow-[0_-8px_40px_-12px_rgb(var(--accent2)/.45)] backdrop-blur-xl">
             {navFor(ctx.snapshot.tournament.format).map((n) => {
               const href = n.slug ? `${base}/${n.slug}` : base;
               const active = n.slug ? pathname.startsWith(href) : pathname === base;
               return (
                 <li key={n.slug} className="flex-1">
                   <Link href={href} aria-current={active ? "page" : undefined} className={`relative flex min-h-14 flex-col items-center justify-center gap-0.5 rounded-xl text-[11px] font-semibold uppercase tracking-wide transition ${active ? "bg-gradient-to-b from-volt/30 to-volt/5 text-neon" : "text-white/65 hover:text-white"}`}>
-                    {active ? <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-neon shadow-[0_0_10px_#2ee6ff]" aria-hidden /> : null}
+                    {active ? <span className="absolute inset-x-5 top-0 h-0.5 rounded-full bg-neon shadow-[0_0_10px_rgb(var(--accent))]" aria-hidden /> : null}
                     <n.Icon size={22} weight={active ? "fill" : "regular"} aria-hidden />{n.label}
                   </Link>
                 </li>

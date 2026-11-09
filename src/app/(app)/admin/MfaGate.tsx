@@ -68,7 +68,7 @@ export function MfaGate() {
                 <li>Escribe el código de 6 dígitos que muestra la app.</li>
               </ol>
               {/* eslint-disable-next-line @next/next/no-img-element -- QR generado como data URL */}
-              <img src={step.qr} alt="Código QR para tu app de autenticación" width={200} height={200} className="mx-auto rounded-xl bg-white p-2" />
+              <img src={step.qr} alt="Código QR para tu app de autenticación" width={200} height={200} className="mx-auto rounded-xl bg-[#fff] p-2" />
               <p className="break-all rounded-lg bg-black/30 p-2 text-center font-mono text-xs text-white/70" aria-label="Clave para copiar">{step.secret}</p>
             </>
           ) : (

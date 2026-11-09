@@ -88,7 +88,7 @@ export default function Invite() {
         ) : (
           <>
             <div className="flex flex-col items-center gap-3 sm:flex-row">
-              {qr ? <RemoteImage src={qr} alt="Código QR de invitación" className="h-40 w-40 rounded-xl bg-white p-1" /> : null}
+              {qr ? <RemoteImage src={qr} alt="Código QR de invitación" className="h-40 w-40 rounded-xl bg-[#fff] p-1" /> : null}
               <div className="w-full space-y-2">
                 <input readOnly aria-label="Link de invitación" className="input text-sm" value={link} onFocus={(e) => e.currentTarget.select()} />
                 <div className="grid grid-cols-3 gap-2">

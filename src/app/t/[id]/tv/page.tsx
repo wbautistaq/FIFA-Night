@@ -46,7 +46,7 @@ export default function TvMode() {
   const total = snapshot.brackets.find((b) => ["knockout", "playoffs"].includes(b.kind))?.rounds;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-pitch-950 bg-[radial-gradient(1200px_600px_at_15%_-10%,rgba(139,92,246,.35),transparent_60%),radial-gradient(900px_500px_at_100%_110%,rgba(244,63,94,.22),transparent_60%)] p-4 text-white sm:p-6 lg:p-10">
+    <div className="fixed inset-0 z-50 flex flex-col overflow-hidden bg-pitch-950 bg-[radial-gradient(1200px_600px_at_15%_-10%,rgb(var(--accent2)/.35),transparent_60%),radial-gradient(900px_500px_at_100%_110%,rgb(var(--live)/.22),transparent_60%)] p-4 text-white sm:p-6 lg:p-10">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0"><p className="eyebrow !text-sm">FIFA Night · FC 27</p><h1 className="truncate text-2xl uppercase sm:text-3xl lg:text-5xl">{t.name}</h1></div>
         <div className="flex items-center gap-2 sm:gap-3">
@@ -55,7 +55,7 @@ export default function TvMode() {
           <button className="btn-secondary !min-h-11 !px-3 text-sm sm:!px-5" aria-label="Pantalla completa" onClick={() => (document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.())}><ArrowsOut size={18} aria-hidden /><span className="hidden sm:inline">Pantalla completa</span></button>
         </div>
       </header>
-      <div className="mb-4 flex gap-2" aria-hidden>{available.map((v) => <span key={v} className={clsx("h-1.5 flex-1 rounded-full transition-colors", v === view ? "bg-neon shadow-[0_0_12px_#2ee6ff]" : "bg-white/15")} />)}</div>
+      <div className="mb-4 flex gap-2" aria-hidden>{available.map((v) => <span key={v} className={clsx("h-1.5 flex-1 rounded-full transition-colors", v === view ? "bg-neon shadow-[0_0_12px_rgb(var(--accent))]" : "bg-white/15")} />)}</div>
       <h2 className="mb-4 flex items-center gap-3 text-2xl uppercase text-white/85 lg:text-4xl" aria-live="polite">{champion ? <><Trophy size={40} weight="fill" className="text-amber-300" aria-hidden />Campeón</> : TITLE[view]}</h2>
 
       <main className="min-h-0 flex-1 overflow-auto" key={view}>

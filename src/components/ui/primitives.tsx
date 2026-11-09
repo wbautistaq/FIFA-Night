@@ -9,7 +9,7 @@ import { ArrowClockwise, ArrowCounterClockwise, CheckCircle, Crown, Handshake, M
 export function Spinner({ label = "Cargando" }: { label?: string }) {
   return (
     <div role="status" aria-live="polite" className="flex items-center justify-center gap-3 py-10 text-white/75">
-      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-neon shadow-[0_0_12px_rgba(46,230,255,.5)]" aria-hidden />
+      <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/15 border-t-neon shadow-[0_0_12px_rgb(var(--accent)/.5)]" aria-hidden />
       <span className="font-semibold uppercase tracking-wider">{label}…</span>
     </div>
   );
@@ -68,7 +68,7 @@ export function Avatar({ name, color = "#7c3aed", url, size = 40 }: { name: stri
   const emoji = avatarEmojiImage(url);
   if (emoji) {
     return (
-      <span aria-hidden className="inline-flex shrink-0 items-center justify-center rounded-full ring-2 ring-white/15" style={{ width: size, height: size, background: `radial-gradient(circle at 30% 25%, rgba(255,255,255,.3), transparent 60%), linear-gradient(140deg, ${color}, #1e1a3d)` }}>
+      <span aria-hidden className="inline-flex shrink-0 items-center justify-center rounded-full ring-2 ring-white/15" style={{ width: size, height: size, background: `radial-gradient(circle at 30% 25%, rgba(255,255,255,.3), transparent 60%), linear-gradient(140deg, ${color}, rgb(var(--s700)))` }}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={emoji.img} alt="" width={Math.round(size * 0.72)} height={Math.round(size * 0.72)} loading="lazy" decoding="async" className="drop-shadow-[0_2px_3px_rgba(0,0,0,.45)]" />
       </span>

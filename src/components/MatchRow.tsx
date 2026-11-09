@@ -57,7 +57,7 @@ export function MatchRow({ match, linkTo = true }: { match: Match; linkTo?: bool
   const sc = scoreText(confirmed);
   const linked = linkTo && match.home_id && match.away_id;
   const content = (
-    <div className={clsx("card flex items-center gap-2 !p-3", linked && "card-interactive", match.status === "live" && "border-blaze/60 shadow-[0_0_24px_-6px_rgba(244,63,94,.6)]", match.status === "cancelled" && "opacity-50")}>
+    <div className={clsx("card flex items-center gap-2 !p-3", linked && "card-interactive", match.status === "live" && "border-blaze/60 shadow-[0_0_24px_-6px_rgb(var(--live)/.6)]", match.status === "cancelled" && "opacity-50")}>
       <PlayerChip participantId={match.home_id} />
       <div className="flex w-[4.75rem] shrink-0 flex-col items-center justify-center">
         {sc ? (

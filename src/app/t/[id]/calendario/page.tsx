@@ -42,7 +42,7 @@ export default function Calendar() {
     <div className="space-y-5">
       <h2 className="section-title">Calendario</h2>
       <div role="tablist" aria-label="Filtro de partidos" className="flex gap-2 overflow-x-auto pb-1">
-        {filters.map(([k, l]) => <button key={k} role="tab" aria-selected={filter === k} onClick={() => setFilter(k)} className={filter === k ? "btn bg-neon !min-h-10 text-pitch-950" : "btn-secondary !min-h-10"}>{l}</button>)}
+        {filters.map(([k, l]) => <button key={k} role="tab" aria-selected={filter === k} onClick={() => setFilter(k)} className={filter === k ? "btn bg-neon !min-h-10 text-onaccent" : "btn-secondary !min-h-10"}>{l}</button>)}
       </div>
 
       {tournament.format === "friendlies" && tournament.status === "in_progress" && viewer.isOrganizer && (

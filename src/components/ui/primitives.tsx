@@ -20,7 +20,7 @@ export function EmptyState({ icon = SoccerBall, title, children }: { icon?: Icon
   const IconCmp = icon as Icon;
   return (
     <div className="card flex flex-col items-center gap-3 py-10 text-center">
-      <span className="grid h-16 w-16 place-items-center rounded-2xl border border-volt/40 bg-gradient-to-br from-volt/30 to-blaze/10 text-neon shadow-glow" aria-hidden>
+      <span className="grid h-16 w-16 place-items-center icon-tile rounded-2xl" aria-hidden>
         {isValidElement(icon) ? icon : <IconCmp size={32} weight="duotone" />}
       </span>
       <h3 className="text-lg uppercase">{title}</h3>

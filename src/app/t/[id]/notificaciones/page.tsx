@@ -27,7 +27,7 @@ export default function Notifications() {
           const KindIcon = ICON[n.kind] ?? Bell;
           return (
             <li key={n.id} className={`card flex items-start gap-3 !p-3 ${n.read_at ? "opacity-75" : "border-neon/40 shadow-glow-neon"}`}>
-              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${n.kind === "tournament_finished" || n.kind === "new_leader" ? "bg-amber-300/15 text-amber-300" : "bg-volt/25 text-neon"}`} aria-hidden><KindIcon size={22} weight="duotone" /></span>
+              <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-xl ${n.kind === "tournament_finished" || n.kind === "new_leader" ? "bg-amber-300/15 text-amber-300" : "icon-tile"}`} aria-hidden><KindIcon size={22} weight="duotone" /></span>
               <div className="min-w-0 flex-1">
                 <p className="font-bold">{n.title}{!n.read_at ? <span className="ml-2 align-middle text-[10px] font-semibold uppercase tracking-wider text-neon">Nueva</span> : null}</p>
                 {n.body ? <p className="text-sm text-white/75">{n.body}</p> : null}

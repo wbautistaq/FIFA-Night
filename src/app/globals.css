@@ -14,20 +14,20 @@
   --font-display: var(--ff-teko);
   --font-sans: var(--ff-inter);
 
-  --ink: 255 255 255;
-  --onaccent: 19 61 34;
-  --s950: 27 99 55;
-  --s900: 19 61 34;
-  --s800: 22 72 40;
-  --s700: 30 88 50;
-  --s600: 40 105 62;
-  --accent: 255 228 92;
-  --accent-dim: 230 200 60;
-  --accent2: 155 231 181;
-  --accent2-light: 190 242 208;
-  --accent2-deep: 46 140 85;
-  --live: 255 107 92;
-  --live-light: 255 150 140;
+  --ink: 244 246 240;
+  --onaccent: 22 40 30;
+  --s950: 30 67 49;
+  --s900: 20 44 33;
+  --s800: 26 54 41;
+  --s700: 34 66 51;
+  --s600: 46 82 65;
+  --accent: 245 213 71;
+  --accent-dim: 215 185 55;
+  --accent2: 236 232 214;
+  --accent2-light: 245 242 228;
+  --accent2-deep: 150 145 125;
+  --live: 255 112 96;
+  --live-light: 255 155 142;
 
   --amber-100: 254 243 199;
   --amber-200: 253 230 138;
@@ -43,8 +43,8 @@
 
   --radius-card: 10px;
   --radius-btn: 8px;
-  --card-bg: rgb(19 61 34 / .92);
-  --card-border: 1.5px solid rgb(255 255 255 / .35);
+  --card-bg: rgb(20 44 33 / .94);
+  --card-border: 1.5px solid rgb(255 255 255 / .22);
   --card-shadow: 0 12px 28px -18px rgb(0 0 0 / .7);
   --card-blur: none;
   --btn-bg: rgb(var(--accent));
@@ -56,8 +56,14 @@
   --heading-tracking: .03em;
   --page-bg: rgb(var(--s950));
   --page-image:
-    radial-gradient(1000px 640px at 50% -10%, rgb(255 255 255 / .07), transparent 60%),
-    repeating-linear-gradient(180deg, #1e6b3c 0 96px, #1b6337 96px 192px);
+    radial-gradient(1000px 640px at 50% -10%, rgb(255 255 255 / .05), transparent 60%),
+    repeating-linear-gradient(180deg, #1e4331 0 96px, #1b3d2d 96px 192px);
+  /* Contenedor de íconos: neutro, para que el ícono no compita con el fondo */
+  --tile-bg: rgb(255 255 255 / .07);
+  --tile-border: 1px solid rgb(255 255 255 / .16);
+  --tile-fg: rgb(var(--ink));
+  --tile-shadow: none;
+  --blob: rgb(255 255 255 / .06);
 }
 
 /* A · Estadio nocturno */
@@ -199,6 +205,17 @@
   --glow-accent: 4px 4px 0 rgb(var(--accent));
   --heading-tracking: 0;
   --page-image: none;
+}
+[data-theme]:not([data-theme="pizarra"]) { --blob: rgb(var(--live) / .3); }
+[data-theme="brutal"] { --tile-bg: #ffffff; --tile-border: 3px solid #111111; --tile-fg: #111111; --tile-shadow: 3px 3px 0 #111111; }
+[data-theme="matchday"] { --tile-bg: #111111; --tile-border: 0 solid transparent; --tile-fg: #ffffff; }
+[data-theme="estadio"], [data-theme="bento"], [data-theme="aurora"], [data-theme="tv"], [data-theme="pixel"] {
+  --tile-bg: rgb(var(--accent) / .12); --tile-border: 1px solid rgb(var(--accent) / .28); --tile-fg: rgb(var(--accent));
+}
+[data-theme="pixel"] { --tile-shadow: 0 -2px 0 rgb(var(--accent) / .5), 0 2px 0 rgb(var(--accent) / .5), -2px 0 0 rgb(var(--accent) / .5), 2px 0 0 rgb(var(--accent) / .5); --tile-border: 0 solid transparent; }
+[data-theme="neon"] {
+  --tile-bg: linear-gradient(135deg, rgb(139 92 246 / .4), rgb(192 38 211 / .2), rgb(244 63 94 / .3));
+  --tile-border: 1px solid rgb(139 92 246 / .5); --tile-fg: rgb(46 230 255); --tile-shadow: var(--glow);
 }
 [data-theme="brutal"] .btn-secondary { border-width: 3px; border-color: #111; background: #fff; box-shadow: 4px 4px 0 #111; }
 
@@ -360,6 +377,12 @@ button, a, [role="button"] { touch-action: manipulation; }
   }
   .card-glow { @apply card border-volt/40 shadow-glow; }
   .card-interactive { @apply transition duration-200 hover:border-volt-light/50 hover:shadow-glow active:scale-[.99]; }
+
+  .glow-blob { background: var(--blob); }
+  /* Botón principal deshabilitado: gris neutro en vez del acento apagado (se veía turbio) */
+  .btn-primary:disabled { background: rgb(var(--ink) / .12); color: rgb(var(--ink) / .55); box-shadow: none; border-color: transparent; opacity: 1; }
+  .icon-tile { @apply grid place-items-center; background: var(--tile-bg); border: var(--tile-border); color: var(--tile-fg); box-shadow: var(--tile-shadow); }
+  [data-theme="pixel"] .icon-tile { border-radius: 0; }
 
   .eyebrow { @apply font-display text-[11px] uppercase tracking-[.18em] text-neon; }
   .section-title { @apply font-display text-xl uppercase tracking-wide; }

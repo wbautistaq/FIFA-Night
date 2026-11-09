@@ -27,7 +27,7 @@ export default function More() {
         {items.map(({ href, Icon: ItemIcon, label, hint }) => (
           <li key={href}>
             <Link href={href} className="card card-interactive flex min-h-16 items-center gap-3 !py-3">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-volt/40 to-blaze/20 text-neon ring-1 ring-white/10" aria-hidden><ItemIcon size={24} weight="duotone" /></span>
+              <span className="grid h-11 w-11 shrink-0 place-items-center icon-tile rounded-xl" aria-hidden><ItemIcon size={24} weight="duotone" /></span>
               <span className="min-w-0 flex-1"><span className="block font-semibold">{label}</span><span className="block truncate text-xs text-white/60">{hint}</span></span>
               <CaretRight size={18} className="text-white/40" aria-hidden />
             </Link>

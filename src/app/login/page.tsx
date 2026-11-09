@@ -83,8 +83,8 @@ function LoginForm() {
   return (
     <main id="main" className="mx-auto flex min-h-dvh max-w-md flex-col justify-center gap-6 px-5 py-10">
       <header className="text-center">
-        <span className="mx-auto grid h-20 w-20 place-items-center rounded-3xl border border-volt/50 bg-gradient-to-br from-volt/40 via-fuchsia-600/20 to-blaze/30 shadow-glow" aria-hidden>
-          <Trophy size={44} weight="duotone" className="text-neon drop-shadow-[0_0_12px_rgb(var(--accent)/.7)]" />
+        <span className="mx-auto grid h-20 w-20 place-items-center icon-tile rounded-3xl" aria-hidden>
+          <Trophy size={44} weight="duotone" />
         </span>
         <h1 className="mt-4 text-5xl uppercase leading-none">FIFA <span className="bg-gradient-to-r from-neon via-volt-light to-blaze-light bg-clip-text text-transparent">Night</span></h1>
         <p className="mt-3 text-white/75">Torneos de EA SPORTS FC 27 entre amigos, en un minuto.</p>

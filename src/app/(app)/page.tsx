@@ -36,7 +36,7 @@ export default async function Home() {
   return (
     <div className="space-y-8">
       <header className="card-glow relative overflow-hidden">
-        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-blaze/30 blur-3xl" aria-hidden />
+        <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full glow-blob blur-3xl" aria-hidden />
         <p className="eyebrow">FIFA Night · FC 27</p>
         <h1 className="mt-1 text-3xl uppercase leading-tight">Hola, <span className="bg-gradient-to-r from-neon to-volt-light bg-clip-text text-transparent">{profile?.nickname || profile?.display_name || "crack"}</span></h1>
         <p className="mt-1 text-sm text-white/70">Arma la noche de FIFA: sorteo, calendario y tabla en vivo.</p>

@@ -3,7 +3,7 @@
 import { useRef } from "react";
 import clsx from "clsx";
 import { Camera, Trash } from "@phosphor-icons/react";
-import { GAMER_AVATARS, avatarEmoji, emojiAvatar } from "@/lib/avatars";
+import { AVATAR_GROUPS, GAMER_AVATARS, avatarEmoji, emojiAvatar } from "@/lib/avatars";
 
 /**
  * Elige el avatar: foto propia (solo con cuenta) o uno de los emoticonos gamer.
@@ -32,17 +32,25 @@ export function AvatarPicker({ value, onChange, onUpload, busy = false }: {
       ) : null}
       <fieldset>
         <legend className="label">{onUpload ? "O elige un avatar gamer" : "Elige tu avatar"}</legend>
-        <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
-          {GAMER_AVATARS.map((a) => {
-            const on = selected === a.emoji;
-            return (
-              <button key={a.emoji} type="button" aria-pressed={on} aria-label={a.label} title={a.label} onClick={() => onChange(emojiAvatar(a.emoji))}
-                className={clsx("grid aspect-square min-h-12 place-items-center rounded-2xl border transition hover:scale-105 active:scale-95", on ? "border-neon bg-neon/15 shadow-glow-neon" : "border-white/10 bg-white/[.05] hover:border-volt-light/50")}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.img} alt="" width={34} height={34} loading="lazy" decoding="async" className="drop-shadow-[0_2px_3px_rgba(0,0,0,.45)]" />
-              </button>
-            );
-          })}
+        {/* Agrupados por tipo para encontrar rápido entre tantas opciones */}
+        <div className="space-y-4">
+          {AVATAR_GROUPS.map((g) => (
+            <div key={g.id} role="group" aria-labelledby={`avatar-group-${g.id}`}>
+              <p id={`avatar-group-${g.id}`} className="mb-2 text-xs font-semibold uppercase tracking-wider text-white/55">{g.label}</p>
+              <div className="grid grid-cols-6 gap-2 sm:grid-cols-8">
+                {GAMER_AVATARS.filter((a) => a.group === g.id).map((a) => {
+                  const on = selected === a.emoji;
+                  return (
+                    <button key={a.emoji} type="button" aria-pressed={on} aria-label={a.label} title={a.label} onClick={() => onChange(emojiAvatar(a.emoji))}
+                      className={clsx("grid aspect-square min-h-12 place-items-center rounded-2xl border transition hover:scale-105 active:scale-95", on ? "border-neon bg-neon/15 shadow-glow-neon" : "border-white/10 bg-white/[.05] hover:border-volt-light/50")}>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={a.img} alt="" width={34} height={34} loading="lazy" decoding="async" className="drop-shadow-[0_2px_3px_rgba(0,0,0,.45)]" />
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
         </div>
       </fieldset>
     </div>

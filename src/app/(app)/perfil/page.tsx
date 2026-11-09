@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ShieldCheck } from "@phosphor-icons/react/dist/ssr";
 import { adminState } from "@/lib/admin";
+import { BlockedUsers, DeleteAccount } from "./AccountSafety";
 import { createClient } from "@/lib/supabase/server";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
@@ -24,6 +25,8 @@ export default async function ProfilePage() {
         <Link href="/admin" className="btn-secondary w-full border-neon/40 text-neon"><ShieldCheck size={20} weight="duotone" aria-hidden /> Administración</Link>
       )}
       <form action="/auth/signout" method="post"><button className="btn-secondary w-full">Cerrar sesión</button></form>
+      <BlockedUsers />
+      <DeleteAccount />
     </div>
   );
 }

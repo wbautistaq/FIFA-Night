@@ -9,6 +9,8 @@ import { createAdminClient } from "@/lib/supabase/server";
 import { describeDevice, ONLINE_WINDOW_MS, type Device } from "@/lib/device";
 import { APPEARANCE_TAG } from "@/lib/site-appearance";
 import { THEME_IDS, effectiveTheme, themeInfo, type ThemeId } from "@/lib/themes";
+import { loadReports, type ReportRow } from "@/app/actions/moderation";
+import { purgeTournament } from "@/lib/tournament-purge";
 
 const uuid = z.string().uuid();
 const email = z.string().trim().toLowerCase().email("Correo inválido");
@@ -70,6 +72,8 @@ export interface AdminOverview {
   log: AdminLogEntry[];
   /** null si la base de datos aún no tiene la función de sesiones (migración 17). */
   sessions: AdminSession[] | null;
+  /** null si la base de datos aún no tiene la tabla de reportes (migración 22). */
+  reports: ReportRow[] | null;
   /** null si la base de datos aún no tiene la tabla site_settings (migración 21). */
   appearance: { theme: ThemeId } | null;
   totals: { users: number; tournaments: number; active: number; matches: number; results: number; onlineUsers: number };
@@ -138,6 +142,7 @@ export async function loadAdminOverview(): Promise<AdminOverview> {
       };
     }) : null,
     appearance: full ? await readAppearance(db) : null,
+    reports: await loadReports(),
     totals: {
       users: usersRes.data.users.length,
       tournaments: ts.length,
@@ -290,14 +295,8 @@ export async function adminDeleteTournament(tournamentId: string): Promise<Actio
     const id = uuid.parse(tournamentId);
     const db = createAdminClient();
     const name = await tournamentName(id);
-    const { data: files } = await db.storage.from("fifa-night").list(`proofs/${id}`);
-    if (files?.length) await db.storage.from("fifa-night").remove(files.map((f) => `proofs/${id}/${f.name}`));
-    // Las asignaciones apuntan a equipos propios del torneo (RESTRICT): se borran antes
-    const del1 = await db.from("team_assignments").delete().eq("tournament_id", id);
-    if (del1.error) throw del1.error;
-    const del2 = await db.from("tournaments").delete().eq("id", id);
-    if (del2.error) throw del2.error;
-    await audit(admin, "Eliminó torneo", "tournament", id, { nombre: name, fotos: files?.length ?? 0 });
+    const fotos = await purgeTournament(db, id);
+    await audit(admin, "Eliminó torneo", "tournament", id, { nombre: name, fotos });
     revalidatePath("/admin");
     return ok();
   } catch (e) {

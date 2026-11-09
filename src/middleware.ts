@@ -1,7 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const PUBLIC_PREFIXES = ["/t", "/api/t", "/login", "/auth", "/unirse", "/g", "/offline", "/_next", "/icons", "/manifest.webmanifest", "/sw.js", "/favicon.ico"];
+const PUBLIC_PREFIXES = ["/t", "/api/t", "/login", "/eliminar-cuenta", "/auth", "/unirse", "/g", "/offline", "/_next", "/icons", "/manifest.webmanifest", "/sw.js", "/favicon.ico"];
 
 export async function middleware(request: NextRequest) {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

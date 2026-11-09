@@ -1,17 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useT } from "@/components/TournamentShell";
 import { ActionButton, Avatar, Emoji3D, EmptyState, RemoteImage, useToast } from "@/components/ui/primitives";
 import { createPost, deletePost, toggleReaction } from "@/app/actions/social";
+import { listMyBlocks, reportContent, setBlocked } from "@/app/actions/moderation";
+import { ReportDialog } from "@/components/ReportDialog";
 import { REACTION_EMOJI, postInputSchema } from "@/lib/schemas";
 import { REACTION_IMAGES } from "@/lib/avatars";
 
 const REACTION_LABEL: Record<string, string> = { fire: "fuego", laugh: "risa", celebrate: "celebración", cry: "llanto", surprise: "sorpresa" };
 import { createClient } from "@/lib/supabase/browser";
-import { Camera, ChatsCircle, SpeakerSlash } from "@phosphor-icons/react";
+import { Camera, ChatsCircle, Flag, Prohibit, SpeakerSlash } from "@phosphor-icons/react";
 
 export default function Wall() {
   const { snapshot, viewer, id, refresh } = useT();
@@ -22,6 +24,16 @@ export default function Wall() {
   const fileRef = useRef<HTMLInputElement>(null);
   const toast = useToast();
   const check = postInputSchema.safeParse({ body });
+  const [reporting, setReporting] = useState<string | null>(null);
+  // Cuentas que bloqueé: sus publicaciones no se muestran
+  const [blocked, setBlockedIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    if (viewer.kind !== "user") return;
+    void listMyBlocks().then((r) => { if (r.ok) setBlockedIds(new Set((r.data ?? []).map((b) => b.userId))); });
+  }, [viewer.kind]);
+  const authorOf = (participantId: string) => participants.find((x) => x.id === participantId);
+  const visible = posts.filter((p) => { const u = authorOf(p.author_participant_id)?.user_id; return !(u && blocked.has(u)); });
+  const hidden = posts.length - visible.length;
 
   if (!tournament.settings.wall) return <EmptyState icon={SpeakerSlash} title="El muro está desactivado" />;
 
@@ -75,16 +87,30 @@ export default function Wall() {
         </form>
       ) : <p className="help">Solo los participantes pueden publicar.</p>}
 
-      {posts.length === 0 ? <EmptyState icon={ChatsCircle} title="El muro está vacío">Sé el primero en comentar.</EmptyState> : (
+      {hidden > 0 && <p className="help">Ocultamos {hidden === 1 ? "1 publicación" : `${hidden} publicaciones`} de personas que bloqueaste. Puedes desbloquearlas en tu perfil.</p>}
+      {visible.length === 0 ? <EmptyState icon={ChatsCircle} title="El muro está vacío">Sé el primero en comentar.</EmptyState> : (
         <ul className="space-y-3">
-          {posts.map((p) => {
-            const author = participants.find((x) => x.id === p.author_participant_id);
+          {visible.map((p) => {
+            const author = authorOf(p.author_participant_id);
+            const own = p.author_participant_id === viewer.participantId;
+            const canBlock = viewer.kind === "user" && Boolean(author?.user_id) && author?.user_id !== viewer.userId;
             const mine = reactions.filter((r) => r.post_id === p.id && r.participant_id === viewer.participantId).map((r) => r.reaction);
             return (
               <li key={p.id} className="card space-y-3 animate-slideUp">
                 <div className="flex items-center gap-2"><Avatar name={author?.display_name ?? "?"} color={author?.avatar_color} size={32} /><div className="min-w-0 flex-1"><p className="truncate text-sm font-semibold">{author?.nickname || author?.display_name}</p><p className="text-xs text-white/50">{formatDistanceToNow(new Date(p.created_at), { addSuffix: true, locale: es })}</p></div>
                   {(viewer.isOrganizer || p.author_participant_id === viewer.participantId) && <ActionButton className="btn-ghost !min-h-9 !px-2 text-xs" confirm="¿Eliminar esta publicación?" onAction={async () => { const r = await deletePost(id, p.id); if (!r.ok) toast.show("error", r.error); else await refresh(); }}>Eliminar</ActionButton>}
                 </div>
+                {!own && viewer.participantId && (
+                  <div className="-mt-1 flex flex-wrap justify-end gap-1">
+                    <button type="button" className="btn-ghost !min-h-9 !px-2 text-xs text-white/60" onClick={() => setReporting(p.id)}><Flag size={14} aria-hidden />Reportar</button>
+                    {canBlock && (
+                      <ActionButton className="btn-ghost !min-h-9 !px-2 text-xs text-white/60" confirm={`¿Bloquear a ${author?.nickname || author?.display_name}? Dejarás de ver sus publicaciones en todos los torneos.`}
+                        onAction={async () => { const r = await setBlocked(id, p.author_participant_id, true); if (!r.ok) return toast.show("error", r.error); setBlockedIds((b) => new Set(b).add(author!.user_id!)); toast.show("success", "Bloqueado. Ya no verás sus publicaciones."); }}>
+                        <Prohibit size={14} aria-hidden />Bloquear
+                      </ActionButton>
+                    )}
+                  </div>
+                )}
                 <p className="whitespace-pre-wrap break-words">{p.body}</p>
                 {p.image_url ? <RemoteImage src={p.image_url} alt="Imagen compartida" className="max-h-80 w-full rounded-xl object-cover" /> : null}
                 <div className="flex flex-wrap gap-1.5">
@@ -97,6 +123,15 @@ export default function Wall() {
             );
           })}
         </ul>
+      )}
+      {reporting && (
+        <ReportDialog title="Reportar publicación" onCancel={() => setReporting(null)}
+          onSubmit={async (reason, details) => {
+            const r = await reportContent(id, { kind: "post", postId: reporting }, reason, details);
+            if (!r.ok) { toast.show("error", r.error); return false; }
+            toast.show("success", "Gracias. El equipo revisará el reporte.");
+            return true;
+          }} />
       )}
       {toast.node}
     </div>

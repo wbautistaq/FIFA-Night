@@ -16,11 +16,13 @@ import {
 import { SessionsTab } from "./SessionsTab";
 import { AppearanceTab } from "./AppearanceTab";
 import { TeamTab } from "./TeamTab";
+import { ReportsTab } from "./ReportsTab";
+import { resolveReport } from "@/app/actions/moderation";
 import type { StaffRole } from "@/lib/staff";
 import { formatFullDateTime } from "@/lib/datetime";
 
-const ADMIN_TABS = ["Resumen", "Usuarios", "Equipo", "Sesiones", "Torneos", "Apariencia", "Registro"] as const;
-const MODERATOR_TABS = ["Resumen", "Usuarios", "Torneos"] as const;
+const ADMIN_TABS = ["Resumen", "Reportes", "Usuarios", "Equipo", "Sesiones", "Torneos", "Apariencia", "Registro"] as const;
+const MODERATOR_TABS = ["Resumen", "Reportes", "Usuarios", "Torneos"] as const;
 type Tab = (typeof ADMIN_TABS)[number];
 const ROLE_LABEL: Record<StaffRole, string> = { admin: "Administrador", moderator: "Moderador" };
 
@@ -30,6 +32,7 @@ const when = (iso: string | null) => (iso ? formatFullDateTime(iso) : "Nunca");
 export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: string }) {
   const isAdmin = data.viewerRole === "admin";
   const tabs: readonly Tab[] = isAdmin ? ADMIN_TABS : MODERATOR_TABS;
+  const openReports = (data.reports ?? []).filter((r) => r.status === "open").length;
   const router = useRouter();
   const toast = useToast();
   const [tab, setTab] = useState<Tab>("Resumen");
@@ -78,7 +81,7 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
 
       <div role="tablist" aria-label="Secciones" className="flex gap-1 overflow-x-auto rounded-xl bg-white/[.04] p-1">
         {tabs.map((t) => (
-          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("min-h-11 flex-1 rounded-lg px-3 text-sm font-semibold transition", tab === t ? "bg-volt/30 text-white" : "text-white/65 hover:text-white")}>{t}</button>
+          <button key={t} role="tab" aria-selected={tab === t} onClick={() => setTab(t)} className={clsx("min-h-11 flex-1 rounded-lg px-3 text-sm font-semibold transition", tab === t ? "bg-volt/30 text-white" : "text-white/65 hover:text-white")}>{t}{t === "Reportes" && openReports ? ` (${openReports})` : ""}</button>
         ))}
       </div>
 
@@ -97,6 +100,7 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
       {tab === "Resumen" && (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {([
+            ["Reportes abiertos", openReports],
             ["Usuarios", data.totals.users],
             ["En línea ahora", data.totals.onlineUsers],
             ["Torneos", data.totals.tournaments],
@@ -115,6 +119,10 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
 
       {tab === "Apariencia" && (
         <AppearanceTab appearance={data.appearance} onChange={async (theme) => { await run(adminSetTheme(theme), "Paleta aplicada a todo el sitio"); }} />
+      )}
+
+      {tab === "Reportes" && (
+        <ReportsTab reports={data.reports} onResolve={async (r, action) => { await run(resolveReport(r.id, action), "Reporte atendido"); }} />
       )}
 
       {tab === "Equipo" && isAdmin && (

@@ -81,6 +81,12 @@ E2E_SUPABASE_URL=http://127.0.0.1:54321 E2E_SUPABASE_ANON_KEY=... E2E_SUPABASE_S
 - En **Admin → Apariencia** el administrador elige la paleta de todo el sitio: Pizarra táctica, Estadio nocturno, Matchday claro, Bento arcade, Neo-brutalista, Vidrio aurora, Transmisión TV, Pixel retro o Neón clásico (el diseño original).
 - Requiere la migración `20261109000021_site_settings.sql`. Los colores de cada paleta están en `src/app/globals.css` y la lista en `src/lib/themes.ts`.
 
+## Equipo, moderación y cuentas
+- **Admin → Equipo**: administradores y moderadores (rol en `app_metadata`, siempre con 2FA). Nadie cambia su propio rol, así siempre queda un administrador.
+- **Reportes**: cualquier participante (también invitados) reporta publicaciones o jugadores; el equipo los atiende en **Admin → Reportes**. Quien tiene cuenta puede **bloquear** a otro jugador y deja de ver sus publicaciones (se desbloquea en Perfil).
+- **Eliminar cuenta**: en Perfil, y la página pública `/eliminar-cuenta` (enlace para la ficha de Google Play). Sus torneos pasan a un coorganizador con cuenta o se borran; en torneos ajenos queda como «Jugador eliminado». Opcional: `NEXT_PUBLIC_SUPPORT_EMAIL` muestra un correo de soporte en esa página.
+- Requiere la migración `20261109000022_reports_blocks.sql`.
+
 ## Despliegue en Vercel
 1. Importa el repo en Vercel (framework: Next.js, sin configuración extra).
 2. Define las 4 variables de entorno de arriba (la service role solo en *Production/Preview*, nunca con prefijo `NEXT_PUBLIC_`).

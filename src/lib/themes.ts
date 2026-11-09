@@ -19,7 +19,7 @@ export interface ThemeInfo {
 }
 
 export const THEMES: readonly ThemeInfo[] = [
-  { id: "pizarra", name: "Pizarra táctica", description: "Cancha con líneas de tiza y acento amarillo.", swatch: ["#1E6B3C", "#133D22", "#FFE45C"], browserColor: "#1B6337" },
+  { id: "pizarra", name: "Pizarra táctica", description: "Cancha con líneas de tiza y acento amarillo.", swatch: ["#1E4331", "#142C21", "#F5D547"], browserColor: "#1E4331" },
   { id: "estadio", name: "Estadio nocturno", description: "Oscuro sobrio con acento verde lima.", swatch: ["#0B1210", "#121B18", "#B8F25A"], browserColor: "#0B1210" },
   { id: "matchday", name: "Matchday claro", description: "Claro y editorial, como un diario deportivo.", swatch: ["#F4F1EA", "#FFFFFF", "#E04A12"], browserColor: "#F4F1EA" },
   { id: "bento", name: "Bento arcade", description: "Bloques sólidos de color sobre negro.", swatch: ["#0A0A0C", "#1A1A1F", "#C6FF3D"], browserColor: "#0A0A0C" },

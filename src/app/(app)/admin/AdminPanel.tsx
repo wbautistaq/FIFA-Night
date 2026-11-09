@@ -11,7 +11,7 @@ import type { TournamentStatus } from "@/lib/types";
 import type { ActionResult } from "@/lib/actor";
 import {
   adminCancelTournament, adminCreateUser, adminDeleteTournament, adminDeleteUser, adminGenerateAccessCode,
-  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetAppearance, adminSetBan, type AdminOverview, type AdminUser,
+  adminRecomputeTournament, adminRevokeSession, adminRevokeSessions, adminSetTheme, adminSetBan, type AdminOverview, type AdminUser,
 } from "@/app/actions/admin";
 import { SessionsTab } from "./SessionsTab";
 import { AppearanceTab } from "./AppearanceTab";
@@ -107,7 +107,7 @@ export function AdminPanel({ data, selfId }: { data: AdminOverview; selfId: stri
       )}
 
       {tab === "Apariencia" && (
-        <AppearanceTab appearance={data.appearance} onChange={async (input) => { await run(adminSetAppearance(input), input.theme ? "Paleta aplicada a todo el sitio" : input.premium ? "Premium activado" : "Premium desactivado"); }} />
+        <AppearanceTab appearance={data.appearance} onChange={async (theme) => { await run(adminSetTheme(theme), "Paleta aplicada a todo el sitio"); }} />
       )}
 
       {tab === "Sesiones" && (

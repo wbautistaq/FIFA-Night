@@ -8,7 +8,7 @@ import { newAccessCode } from "@/lib/access-code";
 import { createAdminClient } from "@/lib/supabase/server";
 import { describeDevice, ONLINE_WINDOW_MS, type Device } from "@/lib/device";
 import { APPEARANCE_TAG } from "@/lib/site-appearance";
-import { DEFAULT_THEME, THEME_IDS, isThemeId, themeInfo, type ThemeId } from "@/lib/themes";
+import { THEME_IDS, effectiveTheme, themeInfo, type ThemeId } from "@/lib/themes";
 
 const uuid = z.string().uuid();
 const email = z.string().trim().toLowerCase().email("Correo inválido");
@@ -68,7 +68,7 @@ export interface AdminOverview {
   /** null si la base de datos aún no tiene la función de sesiones (migración 17). */
   sessions: AdminSession[] | null;
   /** null si la base de datos aún no tiene la tabla site_settings (migración 21). */
-  appearance: { premium: boolean; theme: ThemeId } | null;
+  appearance: { theme: ThemeId } | null;
   totals: { users: number; tournaments: number; active: number; matches: number; results: number; onlineUsers: number };
 }
 
@@ -308,30 +308,21 @@ export async function adminRecomputeTournament(tournamentId: string): Promise<Ac
 }
 
 async function readAppearance(db: ReturnType<typeof createAdminClient>): Promise<AdminOverview["appearance"]> {
-  const { data, error } = await db.from("site_settings").select("premium,theme").eq("id", 1).maybeSingle();
+  const { data, error } = await db.from("site_settings").select("theme").eq("id", 1).maybeSingle();
   if (error || !data) return null;
-  return { premium: data.premium === true, theme: isThemeId(data.theme) ? data.theme : DEFAULT_THEME };
+  return { theme: effectiveTheme(data.theme) };
 }
 
-const appearanceInput = z.object({ premium: z.boolean().optional(), theme: z.enum(THEME_IDS).optional() });
-
-/** Activa/desactiva el plan premium o cambia la paleta de todo el sitio. */
-export async function adminSetAppearance(input: { premium?: boolean; theme?: ThemeId }): Promise<ActionResult> {
+/** Cambia la paleta de todo el sitio. */
+export async function adminSetTheme(theme: ThemeId): Promise<ActionResult> {
   try {
     const admin = await requireAdmin();
-    const change = appearanceInput.parse(input);
+    const next = z.enum(THEME_IDS).parse(theme);
     const db = createAdminClient();
-    const current = await readAppearance(db);
-    if (!current) return fail("Falta aplicar la migración 21 (site_settings) en Supabase");
-    const next = { premium: change.premium ?? current.premium, theme: change.theme ?? current.theme };
-    // Al apagar premium se conserva la paleta elegida, pero el sitio vuelve a mostrar Pizarra táctica
-    if (change.theme && themeInfo(change.theme).premium && !next.premium) return fail("Esa paleta es premium: activa el plan premium primero");
-    const { error } = await db.from("site_settings").update({ ...next, updated_at: new Date().toISOString(), updated_by: admin.userId }).eq("id", 1);
+    if (!(await readAppearance(db))) return fail("Falta aplicar la migración 21 (site_settings) en Supabase");
+    const { error } = await db.from("site_settings").update({ theme: next, updated_at: new Date().toISOString(), updated_by: admin.userId }).eq("id", 1);
     if (error) throw error;
-    const action = change.premium !== undefined && change.premium !== current.premium
-      ? (next.premium ? "Activó premium" : "Desactivó premium")
-      : "Cambió la paleta";
-    await audit(admin, action, "platform", null, { tema: themeInfo(next.theme).name, premium: next.premium });
+    await audit(admin, "Cambió la paleta", "platform", null, { tema: themeInfo(next).name });
     revalidateTag(APPEARANCE_TAG);
     revalidatePath("/", "layout");
     return ok();

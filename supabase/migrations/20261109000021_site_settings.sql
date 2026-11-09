@@ -1,10 +1,9 @@
--- FIFA Night · apariencia del sitio y plan premium
+-- FIFA Night · paleta del sitio
 -- Una sola fila (id = 1). Todos pueden leerla (también invitados sin cuenta);
 -- solo el servidor la cambia con la clave de servicio, después de validar administrador + 2FA.
 
 create table if not exists site_settings (
   id smallint primary key default 1 check (id = 1),
-  premium boolean not null default false,
   theme text not null default 'pizarra'
     check (theme in ('pizarra','estadio','matchday','bento','brutal','aurora','tv','pixel','neon')),
   updated_at timestamptz not null default now(),

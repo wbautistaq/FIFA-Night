@@ -76,9 +76,9 @@ E2E_SUPABASE_URL=http://127.0.0.1:54321 E2E_SUPABASE_ANON_KEY=... E2E_SUPABASE_S
   npm run build && npm run test:e2e
 ```
 
-## Apariencia y plan premium
-- El sitio usa por defecto la paleta **Pizarra táctica** (gratuita).
-- En **Admin → Apariencia** el administrador activa o desactiva el plan premium y elige la paleta de todo el sitio: Estadio nocturno, Matchday claro, Bento arcade, Neo-brutalista, Vidrio aurora, Transmisión TV, Pixel retro o Neón clásico (el diseño original). Sin premium, el sitio vuelve a Pizarra táctica.
+## Apariencia
+- El sitio usa por defecto la paleta **Pizarra táctica**.
+- En **Admin → Apariencia** el administrador elige la paleta de todo el sitio: Pizarra táctica, Estadio nocturno, Matchday claro, Bento arcade, Neo-brutalista, Vidrio aurora, Transmisión TV, Pixel retro o Neón clásico (el diseño original).
 - Requiere la migración `20261109000021_site_settings.sql`. Los colores de cada paleta están en `src/app/globals.css` y la lista en `src/lib/themes.ts`.
 
 ## Despliegue en Vercel

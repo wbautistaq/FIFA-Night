@@ -7,7 +7,7 @@
  * (canales RGB sin comas para que funcionen las opacidades: bg-white/10, text-neon/80…).
  *   --ink: texto principal (la clase text-white usa este color)   --s950…--s600: superficies
  *   --accent: acento principal (neon)   --accent2: acento secundario (volt)   --live: en vivo / alerta (blaze)
- * "pizarra" es el gratuito y predeterminado; los demás son premium (ver src/lib/themes.ts).
+ * "pizarra" es la predeterminada; el administrador elige otra en Admin → Apariencia (ver src/lib/themes.ts).
  */
 :root {
   color-scheme: dark;

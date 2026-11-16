@@ -141,8 +141,8 @@ export function useToast() {
     return () => clearTimeout(t);
   }, [toast]);
   const node = toast ? (
-    <div role={toast.kind === "error" ? "alert" : "status"} className={clsx("fixed inset-x-4 bottom-28 z-50 mx-auto flex max-w-md animate-slideUp items-center justify-center gap-2 rounded-xl border px-4 py-3 text-sm font-semibold shadow-xl backdrop-blur-xl", toast.kind === "error" ? "border-blaze/60 bg-rose-950/90 text-rose-100" : "border-neon/60 bg-pitch-900/90 text-neon shadow-glow-neon")}>
-      {toast.kind === "error" ? <WarningOctagon size={18} weight="fill" aria-hidden /> : <CheckCircle size={18} weight="fill" aria-hidden />}
+    <div role={toast.kind === "error" ? "alert" : "status"} className={clsx("fixed inset-x-4 bottom-28 z-50 mx-auto flex max-w-md animate-slideUp items-center justify-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold lg-thick", toast.kind === "error" ? "text-rose-300" : "text-white")}>
+      {toast.kind === "error" ? <WarningOctagon size={18} weight="fill" aria-hidden /> : <CheckCircle size={18} weight="fill" className="text-neon" aria-hidden />}
       {toast.text}
     </div>
   ) : null;
@@ -161,8 +161,8 @@ function ConfirmDialog({ message, confirmLabel, danger, onCancel, onConfirm }: {
     return () => window.removeEventListener("keydown", onKey);
   }, [onCancel]);
   return createPortal(
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={onCancel}>
-      <div role="alertdialog" aria-modal="true" aria-label="Confirmar acción" className="card w-full max-w-sm space-y-4 !bg-pitch-900" onClick={(e) => e.stopPropagation()}>
+    <div className="lg-scrim fixed inset-0 z-[100] grid place-items-center p-4" onClick={onCancel}>
+      <div role="alertdialog" aria-modal="true" aria-label="Confirmar acción" className="lg-thick w-full max-w-sm animate-pop space-y-4 rounded-[28px] p-5" onClick={(e) => e.stopPropagation()}>
         <p className="text-base text-white">{message}</p>
         <div className="grid grid-cols-2 gap-2">
           <button ref={cancelRef} type="button" className="btn-secondary" onClick={onCancel}>Cancelar</button>

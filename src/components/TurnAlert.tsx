@@ -51,8 +51,8 @@ export function TurnAlert({ tournamentId, participantId, matches, participants, 
   const ack = () => { try { localStorage.setItem(ackKey(call.id), "1"); } catch { /* sin almacenamiento: solo se cierra */ } setDismissed(call.id); };
 
   return (
-    <div role="alertdialog" aria-modal="true" aria-labelledby="turn-h" className="fixed inset-0 z-[60] grid place-items-center bg-pitch-900/90 p-6 backdrop-blur-md">
-      <div className="card-glow w-full max-w-sm animate-pop space-y-5 text-center">
+    <div role="alertdialog" aria-modal="true" aria-labelledby="turn-h" className="lg-scrim fixed inset-0 z-[60] grid place-items-center p-6">
+      <div className="lg-thick w-full max-w-sm animate-pop space-y-5 rounded-[28px] p-6 text-center">
         <GameController size={48} weight="duotone" className="mx-auto animate-pulseGlow text-neon" aria-hidden />
         <div>
           <h2 id="turn-h" className="font-display text-4xl uppercase text-white">¡Te toca!</h2>

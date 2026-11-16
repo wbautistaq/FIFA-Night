@@ -31,8 +31,8 @@ export function ReportDialog({ title, onCancel, onSubmit }: {
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[100] grid place-items-center bg-black/70 p-4 backdrop-blur-sm" onClick={onCancel}>
-      <div role="dialog" aria-modal="true" aria-labelledby="report-title" className="card w-full max-w-sm space-y-4 !bg-pitch-900" onClick={(e) => e.stopPropagation()}>
+    <div className="lg-scrim fixed inset-0 z-[100] grid place-items-center p-4" onClick={onCancel}>
+      <div role="dialog" aria-modal="true" aria-labelledby="report-title" className="lg-thick w-full max-w-sm animate-pop space-y-4 rounded-[28px] p-5" onClick={(e) => e.stopPropagation()}>
         <h2 id="report-title" className="text-lg uppercase">{title}</h2>
         <fieldset className="space-y-1">
           <legend className="label">¿Qué pasa?</legend>

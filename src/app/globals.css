@@ -64,6 +64,23 @@
   --tile-fg: rgb(var(--ink));
   --tile-shadow: none;
   --blob: rgb(255 255 255 / .06);
+
+  /*
+   * Material "Liquid Glass": solo para la interfaz que flota sobre el contenido
+   * (barras de navegación, avisos, diálogos). Nunca en tarjetas, tablas ni fondos.
+   *   regular = barras de navegación · thick = avisos y diálogos · scrim = oscurece detrás de un diálogo
+   * Opacidades elegidas para que el texto mantenga ≥4,5:1 aunque pase contenido claro por debajo.
+   */
+  --lg-tint: var(--s900);
+  --lg-regular-a: .74;
+  --lg-thick-a: .88;
+  --lg-solid-a: .97;
+  --lg-filter-regular: blur(22px) saturate(140%);
+  --lg-filter-thick: blur(28px) saturate(130%);
+  --lg-edge: rgb(255 255 255 / .14);
+  --lg-highlight: rgb(255 255 255 / .20);
+  --lg-shadow: 0 14px 40px -14px rgb(4 14 9 / .7);
+  --lg-scrim: rgb(6 18 12 / .55);
 }
 
 /* A · Estadio nocturno */
@@ -106,8 +123,8 @@
   --s800: 236 232 222;
   --s700: 214 209 198;
   --s600: 190 184 172;
-  --accent: 214 66 14;
-  --accent-dim: 180 55 10;
+  --accent: 186 50 6;
+  --accent-dim: 160 42 4;
   --accent2: 31 107 255;
   --accent2-light: 70 130 255;
   --accent2-deep: 20 70 190;
@@ -351,6 +368,34 @@
 }
 [data-theme="neon"] body { background-size: auto, auto, auto, 32px 32px, 32px 32px; }
 
+/* Material por paleta: el vidrio toma el fondo y el texto de cada una */
+[data-theme="estadio"] { --lg-shadow: 0 14px 40px -14px rgb(0 0 0 / .7); --lg-scrim: rgb(5 9 8 / .6); }
+[data-theme="bento"] { --lg-regular-a: .76; --lg-shadow: 0 14px 40px -14px rgb(0 0 0 / .75); --lg-scrim: rgb(5 5 6 / .6); }
+[data-theme="neon"] { --lg-shadow: 0 14px 40px -14px rgb(3 2 12 / .8); --lg-scrim: rgb(4 3 14 / .6); }
+[data-theme="aurora"] {
+  --lg-regular-a: .62; --lg-thick-a: .82;
+  --lg-filter-regular: blur(24px) saturate(150%); --lg-filter-thick: blur(30px) saturate(140%);
+  --lg-edge: rgb(255 255 255 / .2); --lg-highlight: rgb(255 255 255 / .28);
+  --lg-shadow: 0 16px 44px -16px rgb(5 8 25 / .8); --lg-scrim: rgb(6 9 24 / .55);
+  /* Las tarjetas son contenido: se ven translúcidas pero sin desenfoque (costaba en cada cuadro al desplazar) */
+  --card-blur: none;
+  --card-bg: rgb(36 44 86 / .72);
+}
+[data-theme="matchday"] {
+  --lg-tint: 255 255 255; --lg-regular-a: .78; --lg-thick-a: .92;
+  --lg-edge: rgb(17 17 17 / .1); --lg-highlight: rgb(255 255 255 / .9);
+  --lg-shadow: 0 12px 32px -14px rgb(17 17 17 / .28); --lg-scrim: rgb(17 17 17 / .35);
+}
+/* Paletas de identidad sólida: sin vidrio, superficies opacas con su propio estilo */
+[data-theme="pixel"], [data-theme="brutal"], [data-theme="tv"] {
+  --lg-regular-a: 1; --lg-thick-a: 1; --lg-solid-a: 1;
+  --lg-filter-regular: none; --lg-filter-thick: none;
+  --lg-highlight: transparent; --lg-scrim: rgb(0 0 0 / .6);
+}
+[data-theme="pixel"] { --lg-edge: transparent; --lg-shadow: var(--card-shadow); }
+[data-theme="brutal"] { --lg-edge: #111111; --lg-shadow: 4px 4px 0 #111111; --lg-scrim: rgb(17 17 17 / .45); }
+[data-theme="tv"] { --lg-edge: rgb(255 255 255 / .08); --lg-shadow: inset 0 3px 0 rgb(var(--accent)); }
+
 html { background: rgb(var(--s950)); }
 body {
   @apply text-white antialiased;
@@ -379,6 +424,19 @@ button, a, [role="button"] { touch-action: manipulation; }
   .card-interactive { @apply transition duration-200 hover:border-volt-light/50 hover:shadow-glow active:scale-[.99]; }
 
   .glow-blob { background: var(--blob); }
+
+  /* Liquid Glass. Primero el respaldo sólido; el vidrio solo si el navegador lo soporta. */
+  .lg-regular, .lg-thick {
+    background: rgb(var(--lg-tint) / var(--lg-solid-a));
+    box-shadow: inset 0 1px 0 var(--lg-highlight), inset 0 0 0 1px var(--lg-edge), var(--lg-shadow);
+  }
+  [data-theme="brutal"] .lg-regular, [data-theme="brutal"] .lg-thick { box-shadow: inset 0 0 0 3px var(--lg-edge), var(--lg-shadow); }
+  @supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    .lg-regular { background: rgb(var(--lg-tint) / var(--lg-regular-a)); -webkit-backdrop-filter: var(--lg-filter-regular); backdrop-filter: var(--lg-filter-regular); }
+    .lg-thick { background: rgb(var(--lg-tint) / var(--lg-thick-a)); -webkit-backdrop-filter: var(--lg-filter-thick); backdrop-filter: var(--lg-filter-thick); }
+  }
+  /* El fondo oscurecido no desenfoca: si lo hiciera, el diálogo de encima no podría ver a través (raíz del backdrop) */
+  .lg-scrim { background: var(--lg-scrim); }
   /* Botón principal deshabilitado: gris neutro en vez del acento apagado (se veía turbio) */
   .btn-primary:disabled { background: rgb(var(--ink) / .12); color: rgb(var(--ink) / .55); box-shadow: none; border-color: transparent; opacity: 1; }
   .icon-tile { @apply grid place-items-center; background: var(--tile-bg); border: var(--tile-border); color: var(--tile-fg); box-shadow: var(--tile-shadow); }
@@ -402,4 +460,12 @@ button, a, [role="button"] { touch-action: manipulation; }
   .error-text { @apply mt-1 text-sm text-rose-300; }
 
   .skeleton { @apply rounded-xl bg-[length:200%_100%] animate-shimmer; background-image: linear-gradient(90deg, rgb(var(--ink) / .04), rgb(var(--ink) / .10), rgb(var(--ink) / .04)); }
+}
+
+/* Quien pide más contraste o menos transparencia recibe superficies sólidas */
+@media (prefers-contrast: more), (prefers-reduced-transparency: reduce) {
+  .lg-regular, .lg-thick { background: rgb(var(--lg-tint)); -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: inset 0 0 0 1px rgb(var(--ink) / .6); }
+}
+@media (forced-colors: active) {
+  .lg-regular, .lg-thick { background: Canvas; border: 1px solid CanvasText; -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
